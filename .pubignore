@@ -1,0 +1,5 @@
+# Files and directories to exclude from pub.dev publishing
+scripts/
+.vscode/
+release_guide.md
+publishing_guide.md

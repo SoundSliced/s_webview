@@ -91,7 +91,7 @@ class _SWebViewState extends State<SWebView> {
             : // If loaded, show the WebView
             WebView(
                 controller: webViewController!,
-              ).animate(key: ValueKey("myWebview - ${widget.url}"), effects: [
+              ).animate(key: ValueKey("sWebview - ${widget.url}"), effects: [
                 FadeEffect(
                   duration: Duration(seconds: 2, milliseconds: 500),
                   curve: Curves.fastEaseInToSlowEaseOut,

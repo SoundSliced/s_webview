@@ -1,9 +1,9 @@
 name: s_webview
-description: A Flutter package for myWebView functionality
+description: A Flutter package that provides an enhanced WebView widget with smooth animations and loading states
 version: 0.0.1
-homepage: https://github.com/SoundSliced/ss_webview
-repository: https://github.com/SoundSliced/ss_webview
-issue_tracker: https://github.com/SoundSliced/ss_webview/issues
+homepage: https://github.com/SoundSliced/mywebview
+repository: https://github.com/SoundSliced/mywebview
+issue_tracker: https://github.com/SoundSliced/mywebview/issues
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

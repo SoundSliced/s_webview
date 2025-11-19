@@ -32,7 +32,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MyWebView Example'),
+        title: const Text('SWebView Example'),
       ),
       body: const Center(
         child: SWebView(url: 'https://flutter.dev'),

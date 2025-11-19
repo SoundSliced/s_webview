@@ -331,6 +331,20 @@ rename_package() {
 run_verification() {
     print_info "Running release verification checklist..."
 
+    # Documentation review with Copilot
+    print_info "Ensuring documentation is up to date..."
+    if confirm "Use Copilot AI to review and update CHANGELOG.md, README.md, and other documentation to reflect the current version ($VERSION) and package functionality?"; then
+        print_info "Please use Copilot AI in VS Code to update the documentation files."
+        print_info "Ask Copilot to:"
+        print_info "  - Ensure CHANGELOG.md includes the current version $VERSION and describes changes"
+        print_info "  - Update README.md to accurately describe the package, its features, and include example usage"
+        print_info "  - Verify all MD files are up to date with the latest package information"
+        print_info "  - Ensure README.md reflects the examples in the example/ directory"
+        if confirm "Press enter when documentation is updated"; then
+            print_success "Documentation updated via Copilot."
+        fi
+    fi
+
     # Version consistency
     print_info "Checking version consistency..."
     if ! grep -q "^version: $VERSION$" pubspec.yaml; then
@@ -343,6 +357,9 @@ run_verification() {
         if ! grep -q "$VERSION" README.md; then
             print_warning "Version not found in README.md"
         fi
+        if ! grep -qi "example" README.md; then
+            print_warning "README.md does not mention examples. Consider adding example usage."
+        fi
     else
         print_warning "README.md not found"
     fi
@@ -353,6 +370,26 @@ run_verification() {
         fi
     else
         print_warning "CHANGELOG.md not found"
+    fi
+
+    # Test files check
+    print_info "Checking for test files..."
+    if [[ ! -d "test" ]] || [[ -z "$(find test -name "*.dart" 2>/dev/null)" ]]; then
+        print_warning "No test files found in test/ directory."
+        print_info "Use Copilot AI to generate comprehensive tests for your package."
+        if ! confirm "Continue without tests?"; then
+            exit 1
+        fi
+    fi
+
+    # Example code check
+    print_info "Checking for example code..."
+    if [[ ! -d "example" ]] || [[ ! -f "example/lib/main.dart" ]]; then
+        print_warning "No example code found in example/ directory."
+        print_info "Use Copilot AI to create example usage code demonstrating the package functionality."
+        if ! confirm "Continue without example?"; then
+            exit 1
+        fi
     fi
 
     # Code checks
