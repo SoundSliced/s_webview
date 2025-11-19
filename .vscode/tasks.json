@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Initialize Git Repository",
+			"type": "shell",
+			"command": "git init"
+		},
+		{
+			"label": "Add all files to git",
+			"type": "shell",
+			"command": "git add ."
+		}
+	]
+}
