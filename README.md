@@ -1,4 +1,4 @@
-# mywebview
+# ss_webview
 
 A Flutter package for myWebView functionality.
 
@@ -8,14 +8,14 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  mywebview:
+  ss_webview:
     path: ../my_extensions/myWebView
 ```
 
 ## Usage
 
 ```dart
-import 'package:mywebview/mywebview.dart';
+import 'package:ss_webview/ss_webview.dart';
 ```
 
 ## Features
@@ -25,3 +25,11 @@ import 'package:mywebview/mywebview.dart';
 ## License
 
 TODO: Add license information
+
+## Repository
+
+https://github.com/SoundSliced/ss_webview
+
+## Repository
+
+https://github.com/SoundSliced/s_webview

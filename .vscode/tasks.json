@@ -10,6 +10,126 @@
 			"label": "Add all files to git",
 			"type": "shell",
 			"command": "git add ."
+		},
+		{
+			"label": "Create initial commit",
+			"type": "shell",
+			"command": "git commit -m \"Initial commit\""
+		},
+		{
+			"label": "Dry run GitHub repo creation",
+			"type": "shell",
+			"command": "chmod +x scripts/create_github_repo.sh && USERNAME=SoundSliced REPO=mywebview scripts/create_github_repo.sh --dry-run"
+		},
+		{
+			"label": "Check git remotes",
+			"type": "shell",
+			"command": "git remote -v"
+		},
+		{
+			"label": "Create GitHub repo",
+			"type": "shell",
+			"command": "USERNAME=SoundSliced REPO=mywebview scripts/create_github_repo.sh"
+		},
+		{
+			"label": "Check git status",
+			"type": "shell",
+			"command": "git status"
+		},
+		{
+			"label": "Check git remotes",
+			"type": "shell",
+			"command": "git remote -v"
+		},
+		{
+			"label": "Push to GitHub",
+			"type": "shell",
+			"command": "git push -u origin main"
+		},
+		{
+			"label": "Add remote origin",
+			"type": "shell",
+			"command": "git remote add origin https://github.com/SoundSliced/mywebview.git"
+		},
+		{
+			"label": "Push to GitHub",
+			"type": "shell",
+			"command": "git push -u origin main"
+		},
+		{
+			"label": "Pull from GitHub",
+			"type": "shell",
+			"command": "git pull origin main --allow-unrelated-histories"
+		},
+		{
+			"label": "Fetch from origin",
+			"type": "shell",
+			"command": "git fetch origin"
+		},
+		{
+			"label": "Pull from GitHub",
+			"type": "shell",
+			"command": "git pull --allow-unrelated-histories"
+		},
+		{
+			"label": "Check branches",
+			"type": "shell",
+			"command": "git branch -a"
+		},
+		{
+			"label": "Force push to GitHub",
+			"type": "shell",
+			"command": "git push --force -u origin main"
+		},
+		{
+			"label": "Dry Run Publish",
+			"type": "shell",
+			"command": "flutter pub publish --dry-run"
+		},
+		{
+			"label": "Flutter Analyze",
+			"type": "shell",
+			"command": "flutter analyze"
+		},
+		{
+			"label": "Flutter Test",
+			"type": "shell",
+			"command": "flutter test"
+		},
+		{
+			"label": "Create GitHub Repo Dry Run",
+			"type": "shell",
+			"command": "bash scripts/create_github_repo.sh --dry-run"
+		},
+		{
+			"label": "Run MyWebView Test",
+			"type": "shell",
+			"command": "flutter test test/mywebview_test.dart"
+		},
+		{
+			"label": "Run MyWebView Test",
+			"type": "shell",
+			"command": "flutter test test/mywebview_test.dart"
+		},
+		{
+			"label": "Flutter Test",
+			"type": "shell",
+			"command": "flutter test"
+		},
+		{
+			"label": "Run MyWebView Test",
+			"type": "shell",
+			"command": "flutter test test/mywebview_test.dart"
+		},
+		{
+			"label": "Run MyWebView Test",
+			"type": "shell",
+			"command": "flutter test test/mywebview_test.dart"
+		},
+		{
+			"label": "Run Release and Publish Script",
+			"type": "shell",
+			"command": "bash scripts/release_publish.sh"
 		}
 	]
 }

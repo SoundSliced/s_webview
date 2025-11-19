@@ -16,16 +16,16 @@ import 'package:ticker_free_circular_progress_indicator/ticker_free_circular_pro
 //though it is stable and also works well on web
 //************************************************** */
 
-class MyWebView extends StatefulWidget {
+class SWebView extends StatefulWidget {
   final String url;
 
-  const MyWebView({super.key, this.url = "https://flutter.dev"});
+  const SWebView({super.key, this.url = "https://flutter.dev"});
 
   @override
-  State<MyWebView> createState() => _MyWebViewState();
+  State<SWebView> createState() => _SWebViewState();
 }
 
-class _MyWebViewState extends State<MyWebView> {
+class _SWebViewState extends State<SWebView> {
   WebViewController? webViewController;
   bool? isLoaded;
 
@@ -59,7 +59,7 @@ class _MyWebViewState extends State<MyWebView> {
   }
 
   @override
-  void didUpdateWidget(MyWebView oldWidget) {
+  void didUpdateWidget(SWebView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.url != widget.url) {
       // Reset the loading state

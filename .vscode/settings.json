@@ -1,0 +1,4 @@
+{
+    "chat.tools.terminal.autoReplyToPrompts": true,
+    "chat.tools.terminal.outputLocation": "terminal"
+}
