@@ -1,5 +1,3 @@
-# s_webview Example
-
 # SWebView Example App
 
 This example demonstrates how to use the `s_webview` package in a Flutter application.
@@ -19,6 +17,14 @@ This example app showcases the following features of the SWebView package:
 From the example directory, run:
 
 ```bash
+flutter pub get
+flutter run
+```
+
+Or from the root of the package:
+
+```bash
+cd example
 flutter pub get
 flutter run
 ```
@@ -58,6 +64,21 @@ SWebView(
 3. **Material Design**: Integrating SWebView with AppBar, PopupMenuButton, and other Material widgets
 4. **Responsive Layout**: Using Column and Expanded to create a flexible layout
 
+## Code Overview
+
+The example app creates a Flutter application with:
+
+- **Dynamic Website Switching**: Uses a PopupMenuButton to select from multiple predefined websites
+- **URL Display**: Shows the currently loaded URL in an information banner
+- **Responsive Layout**: Combines the info banner with the SWebView in a Column layout
+
+The SWebView widget automatically handles:
+
+- Displaying a loading indicator while the page loads
+- Showing the web content with a smooth fade-in animation
+- Handling any errors that might occur during loading
+- Reloading when the URL changes
+
 ## Customization
 
 Feel free to modify the example to:
@@ -67,46 +88,14 @@ Feel free to modify the example to:
 - Add navigation buttons (back/forward)
 - Implement a URL input field
 - Add favorites functionality
-
-## Learn More
-
-For more information about the s_webview package, see the main [README.md](../README.md) file.
-
-## Features Demonstrated
-
-- Basic usage of the SWebView widget
-- Loading a web page with smooth animations
-- Handling loading and error states
-
-## Running the Example
-
-1. Navigate to the example directory:
-```bash
-cd example
-```
-
-2. Get the dependencies:
-```bash
-flutter pub get
-```
-
-3. Run the app:
-```bash
-flutter run
-```
-
-## Code Overview
-
-The example app creates a simple Flutter application that displays the Flutter.dev website using the SWebView widget. The widget automatically handles:
-
-- Displaying a loading indicator while the page loads
-- Showing the web content with a smooth fade-in animation
-- Handling any errors that might occur during loading
-
-## Customization
+- Change the theme and styling
 
 You can modify the `url` parameter in the `SWebView` widget to load different websites:
 
 ```dart
 SWebView(url: 'https://your-website.com')
 ```
+
+## Learn More
+
+For more information about the s_webview package, see the main [README.md](../README.md) file.

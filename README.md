@@ -17,7 +17,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  s_webview: ^1.0.1
+  s_webview: ^1.0.2
 ```
 
 Then run:
@@ -168,12 +168,8 @@ The SWebView widget provides the following behavior:
 
 ## Repository
 
-https://github.com/SoundSliced/mywebview
+https://github.com/SoundSliced/s_webview
 
 ## Issues
 
-Report issues and request features at: https://github.com/SoundSliced/mywebview/issues
-
-## Repository
-
-https://github.com/SoundSliced/s_webview
+Report issues and request features at: https://github.com/SoundSliced/s_webview/issues

@@ -1,6 +1,8 @@
 ## 1.0.2
 
-* Version 1.0.2
+* Fixed repository URLs in pubspec.yaml to correctly reference s_webview instead of mywebview
+* Updated all documentation to reflect correct repository links
+* Improved package metadata for better pub.dev compatibility
 
 ## 1.0.1
 
