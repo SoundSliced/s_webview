@@ -2,4 +2,4 @@
 scripts/
 .vscode/
 release_guide.md
-publishing_guide.md
+publishing_guide.md*.sh
