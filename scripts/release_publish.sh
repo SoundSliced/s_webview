@@ -1,6 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Establish the package root (directory containing this script's parent) regardless of invocation location.
+# This prevents accidental operations (like git add -A) from traversing the entire parent repository when this
+# package lives inside a larger monorepo (or worse, the user's home directory).
+SCRIPT_SOURCE="${BASH_SOURCE[0]}"
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_SOURCE}")" && pwd)"
+PACKAGE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "${PACKAGE_ROOT}" || {
+    echo "Failed to change directory to package root: ${PACKAGE_ROOT}" >&2
+    exit 1
+}
+
+# Detect if the git repository toplevel differs from the package root (nested package scenario).
+GIT_TOPLEVEL="$(git rev-parse --show-toplevel 2>/dev/null || echo '')"
+if [[ -n "${GIT_TOPLEVEL}" && "${GIT_TOPLEVEL}" != "${PACKAGE_ROOT}" ]]; then
+    echo "WARNING: Package directory '${PACKAGE_ROOT}' is inside a larger git repository: '${GIT_TOPLEVEL}'." >&2
+    echo "WARNING: Commits from this script will be restricted to the package subtree only (git add .)." >&2
+    echo "WARNING: Consider creating a dedicated repository for the package to avoid unintended staging of unrelated files." >&2
+fi
+
 # Combined Release and Publishing Script for Flutter/Dart Packages
 # This script handles package renaming, verification, GitHub repo creation, and pub.dev publishing
 # Run this script from your package root directory (where pubspec.yaml is located)
@@ -112,14 +131,15 @@ EOF
 
 # Function to commit pending changes before verification
 commit_changes() {
-    # Check if there are any changes to commit
+    # Restrict staging to the package subtree (.) to avoid adding files from parent repo hierarchy.
+    # This is critical when the package is nested inside a larger repository (e.g., a monorepo or user home dir).
     if ! git diff --quiet || ! git diff --cached --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
-        print_info "Committing changes before verification..."
-        
-        # Add all modified and new files
-        git add -A
-        
-        # Create commit message
+        print_info "Committing changes before verification (scoped to package directory)..."
+
+        # Stage only within current directory tree.
+        git add .
+
+        # Compose commit message.
         local commit_msg="Update package to version $VERSION
 
 - Updated version to $VERSION
@@ -127,15 +147,21 @@ commit_changes() {
 - Organized shell scripts into scripts/ directory
 - Added .gitattributes for GitHub Linguist
 - Added .pubignore to exclude scripts from published package"
-        
+
+        # Create commit only if there is something staged.
+        if git diff --cached --quiet; then
+            print_info "No staged changes to commit after filtering scope."
+            return 0
+        fi
+
         git commit -m "$commit_msg" || {
             print_warning "Git commit failed or nothing to commit"
             return 1
         }
-        
-        print_success "Changes committed successfully"
+
+        print_success "Changes committed successfully (package scope)"
     else
-        print_info "No changes to commit, working directory is clean"
+        print_info "No changes to commit, working directory is clean (package scope)"
     fi
 }
 
