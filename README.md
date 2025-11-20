@@ -9,6 +9,7 @@ A Flutter package that provides an enhanced WebView widget with smooth animation
 - **Fade Animations**: Beautiful fade-in effects for loading and webview transitions
 - **URL Updates**: Automatically reloads when the URL property changes
 - **Cross-Platform**: Built on top of atomic_webview for reliable performance across platforms
+- **Performance Optimized**: Uses ticker-free circular progress indicator for better performance
 
 ## Installation
 
@@ -16,7 +17,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  s_webview: ^0.0.1
+  s_webview: ^1.0.0
 ```
 
 Then run:
@@ -27,6 +28,8 @@ flutter pub get
 
 ## Usage
 
+### Basic Usage
+
 Import the package:
 
 ```dart
@@ -36,6 +39,28 @@ import 'package:s_webview/s_webview.dart';
 Use the SWebView widget in your Flutter app:
 
 ```dart
+import 'package:flutter/material.dart';
+import 'package:s_webview/s_webview.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'SWebView Example',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const MyHomePage(),
+    );
+  }
+}
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
@@ -78,6 +103,15 @@ This package uses:
 
 MIT License - see LICENSE file for details.
 
+## Behavior
+
+The SWebView widget provides the following behavior:
+
+1. **Loading State**: When the webview is initializing, a circular progress indicator is displayed with a smooth fade-in animation (500ms)
+2. **Error State**: If the URL fails to load, an error message is displayed
+3. **Loaded State**: Once the webview successfully loads, it fades in with a 2.5-second animation using a custom easing curve
+4. **Dynamic URL Updates**: When the `url` property changes, the widget automatically reloads the new URL with fresh loading animations
+
 ## Repository
 
 https://github.com/SoundSliced/mywebview
@@ -85,7 +119,3 @@ https://github.com/SoundSliced/mywebview
 ## Issues
 
 Report issues and request features at: https://github.com/SoundSliced/mywebview/issues
-
-## Repository
-
-https://github.com/SoundSliced/s_webview
