@@ -119,3 +119,7 @@ https://github.com/SoundSliced/mywebview
 ## Issues
 
 Report issues and request features at: https://github.com/SoundSliced/mywebview/issues
+
+## Repository
+
+https://github.com/SoundSliced/s_webview
