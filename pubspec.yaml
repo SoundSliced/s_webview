@@ -1,9 +1,9 @@
 name: s_webview
 description: A Flutter package that provides an enhanced WebView widget with smooth animations and loading states
-version: 1.0.1
-homepage: https://github.com/SoundSliced/mywebview
-repository: https://github.com/SoundSliced/mywebview
-issue_tracker: https://github.com/SoundSliced/mywebview/issues
+version: 1.0.2
+homepage: https://github.com/SoundSliced/s_webview
+repository: https://github.com/SoundSliced/s_webview
+issue_tracker: https://github.com/SoundSliced/s_webview/issues
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -14,7 +14,7 @@ dependencies:
     sdk: flutter
   atomic_webview: ^0.0.7
   flutter_animate: ^4.5.2
-  ticker_free_circular_progress_indicator: ^0.0.2
+  ticker_free_circular_progress_indicator: ^1.0.0
 
 dev_dependencies:
   flutter_test:
