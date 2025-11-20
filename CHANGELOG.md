@@ -1,6 +1,11 @@
 ## 1.0.1
 
-* Version 1.0.1
+* Updated documentation and examples
+* Enhanced README with comprehensive usage examples
+* Improved example app to demonstrate URL switching functionality
+* Added more comprehensive test coverage
+* Fixed repository references consistency
+* Minor code documentation improvements
 
 ## 1.0.0
 

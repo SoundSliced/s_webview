@@ -17,7 +17,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  s_webview: ^1.0.0
+  s_webview: ^1.0.1
 ```
 
 Then run:
@@ -83,6 +83,60 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 ```
 
+### Advanced Usage - Dynamic URL Switching
+
+The SWebView widget automatically handles URL changes. Here's an example that allows users to switch between different websites:
+
+```dart
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  String currentUrl = 'https://flutter.dev';
+
+  final List<Map<String, String>> websites = [
+    {'name': 'Flutter', 'url': 'https://flutter.dev'},
+    {'name': 'Dart', 'url': 'https://dart.dev'},
+    {'name': 'GitHub', 'url': 'https://github.com'},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('SWebView Example'),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.language),
+            onSelected: (String url) {
+              setState(() {
+                currentUrl = url;
+              });
+            },
+            itemBuilder: (BuildContext context) {
+              return websites.map((website) {
+                return PopupMenuItem<String>(
+                  value: website['url'],
+                  child: Text(website['name']!),
+                );
+              }).toList();
+            },
+          ),
+        ],
+      ),
+      body: SWebView(
+        key: ValueKey(currentUrl),
+        url: currentUrl,
+      ),
+    );
+  }
+}
+```
+
 ## Parameters
 
 - `url`: The URL to load in the webview (defaults to 'https://flutter.dev')
@@ -119,7 +173,3 @@ https://github.com/SoundSliced/mywebview
 ## Issues
 
 Report issues and request features at: https://github.com/SoundSliced/mywebview/issues
-
-## Repository
-
-https://github.com/SoundSliced/s_webview
