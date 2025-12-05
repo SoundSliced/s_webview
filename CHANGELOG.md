@@ -1,3 +1,7 @@
+## 1.0.3
+
+* example.gif added
+
 ## 1.0.2
 
 * Fixed repository URLs in pubspec.yaml to correctly reference s_webview instead of mywebview

@@ -17,7 +17,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  s_webview: ^1.0.2
+  s_webview: ^1.0.3
 ```
 
 Then run:
