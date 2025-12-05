@@ -9,3 +9,30 @@ publishing_guide.md*.sh
 *.sh
 *.sh
 *.sh
+*.sh
+
+# Exclude build artifacts and cache directories
+build/
+.dart_tool/
+.packages
+
+# Exclude example build artifacts
+example/build/
+example/.dart_tool/
+example/.packages
+
+# Exclude IDE and editor files
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# Exclude OS files
+.DS_Store
+Thumbs.db
+
+# Exclude test cache
+test/.test_cache/
+.test_cache/

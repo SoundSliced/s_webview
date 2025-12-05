@@ -11,13 +11,17 @@ A Flutter package that provides an enhanced WebView widget with smooth animation
 - **Cross-Platform**: Built on top of atomic_webview for reliable performance across platforms
 - **Performance Optimized**: Uses ticker-free circular progress indicator for better performance
 
+## DEMO
+
+![Demo](https://raw.githubusercontent.com/SoundSliced/s_webview/main/example/assets/example.gif)
+
 ## Installation
 
 Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  s_webview: ^1.0.3
+  s_webview: ^1.0.4
 ```
 
 Then run:

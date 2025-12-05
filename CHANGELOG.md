@@ -1,3 +1,7 @@
+## 1.0.4
+
+* README updated
+
 ## 1.0.3
 
 * example.gif added

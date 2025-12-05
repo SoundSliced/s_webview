@@ -108,6 +108,61 @@ EOF
             print_info "Added '*.sh' to .pubignore"
         fi
     fi
+    
+    # Ensure build artifacts and other critical exclusions are present
+    local needs_update=false
+    
+    # Check for critical patterns
+    if ! grep -q '^build/' "$file"; then
+        needs_update=true
+    fi
+    if ! grep -q '^\.dart_tool/' "$file"; then
+        needs_update=true
+    fi
+    if ! grep -q '^example/build/' "$file"; then
+        needs_update=true
+    fi
+    
+    # If critical patterns are missing, append them
+    if [[ "$needs_update" == true ]]; then
+        print_info "Adding build artifact exclusions to .pubignore..."
+        
+        # Add newline if file doesn't end with one
+        if [[ -n "$(tail -c 1 "$file" 2>/dev/null)" ]]; then
+            echo "" >> "$file"
+        fi
+        
+        # Append comprehensive exclusions
+        cat >> "$file" <<'EOF'
+
+# Exclude build artifacts and cache directories
+build/
+.dart_tool/
+.packages
+
+# Exclude example build artifacts
+example/build/
+example/.dart_tool/
+example/.packages
+
+# Exclude IDE and editor files
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# Exclude OS files
+.DS_Store
+Thumbs.db
+
+# Exclude test cache
+test/.test_cache/
+.test_cache/
+EOF
+        print_success "Added comprehensive exclusions to .pubignore"
+    fi
 }
 
 # Function to commit pending changes before verification
