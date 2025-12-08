@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Clean and Run Flutter Web",
+			"type": "shell",
+			"command": "rm -rf .chrome-dev-profile && flutter run -d chrome --web-port=8082",
+			"isBackground": true,
+			"group": "build"
+		}
+	]
+}

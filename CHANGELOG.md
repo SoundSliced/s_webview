@@ -1,10 +1,39 @@
+ 
+
+## 2.0.0
+
+* **New Features: - SPECIALLY on WEB PLATFORM**
+  * (**Web-platform**) Added `SWebView.tapTarget` method to wrap widgets stacked over the WebView, making them tappable on Web (handles pointer interception).
+  * (**Web-platform**) Added `showToolbar` parameter to display a built-in toolbar with "Retry with Proxy", "Clear Proxy Cache", and "Open in New Tab" buttons (Web only).
+  * (**Web-platform**) Added `autoDetectFrameRestrictions` parameter to automatically detect X-Frame-Options and CSP restrictions and switch to proxy mode if needed.
+  * (**Web-platform**) Added `corsProxyUrls` parameter to allow customization of the CORS proxies list.
+  * Added static utility methods:
+    * (**Web-platform**) `SWebView.retryWithProxy(url)`: Manually retry a URL using a CORS proxy.
+    * `SWebView.openInNewTab(url)`: Open a URL in a new browser tab.
+    * (**Web-platform**) `SWebView.removeFromCache(url)`: Remove a URL from the proxy cache.
+    * `SWebView.getProxyCache()`: Get the current state of the proxy cache.
+    * (**Web-platform**) `SWebView.isUrlInProxyCache(url)`: Check if a specific URL is cached.
+
+* **Improvements:**
+  * (**Web-platform**) **Persistent Caching:** Proxy settings and restriction detections are now saved to `SharedPreferences`, persisting across app restarts.
+  * (**Web-platform**) **Smart Proxy Detection:** Intelligent detection logic that tests proxies to determine if a site (like Google or GitHub) requires a proxy, falling back to direct load if possible.
+  * **Web Stability:** Fixed browser freezing issue on Web by injecting a `<base>` tag in proxied HTML to prevent infinite 404 loops for relative resources.
+  * **Architecture:** Integrated `_s_webview` as an internal sub-package, removing external dependencies and allowing for tighter integration and fixes.
+  * **Platform Support:** Full support for all platforms (iOS, Android, Web, Windows, macOS, Linux).
+  * **Clarification:** Proxy features (CORS/X-Frame-Options handling) are **Web-only**. Native platforms (iOS, Android, Desktop) use native WebViews which do not suffer from these restrictions and load all websites correctly without proxies.
+
+* **Fixes & Maintenance:**
+  * Fixed missing type annotations throughout the codebase.
+  * Fixed import path issues (converted absolute imports to relative imports).
+  * Added comprehensive documentation to all public APIs.
+  * Improved code quality and analysis score.
+  * Enhanced WebView controller with better error handling.
+  * Fixed WASM compatibility warnings.
+  * Updated dependencies to latest stable versions.
+
 ## 1.0.4
 
 * README updated
-
-## 1.0.3
-
-* example.gif added
 
 ## 1.0.2
 
@@ -25,7 +54,7 @@
 
 * Initial stable release
 * Enhanced WebView widget with smooth animations and loading states
-* Integrated with atomic_webview for cross-platform webview support
+* Integrated with _s_webview for cross-platform webview support
 * Added smooth fade-in animations using flutter_animate
 * Included ticker-free circular progress indicator for loading state
 * Support for URL changes with automatic reloading
@@ -36,7 +65,7 @@
 
 * Initial release of SWebView package
 * Added SWebView widget with animated loading and error states
-* Integrated with atomic_webview for cross-platform webview support
+* Integrated with _s_webview for cross-platform webview support
 * Added smooth fade-in animations using flutter_animate
 * Included ticker-free circular progress indicator for loading state
 * Support for URL changes with automatic reloading

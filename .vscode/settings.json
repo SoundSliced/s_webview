@@ -1,4 +1,6 @@
 {
     "chat.tools.terminal.autoReplyToPrompts": true,
-    "chat.tools.terminal.outputLocation": "terminal"
+    "chat.tools.terminal.outputLocation": "terminal",
+    "editor.gotoLocation.multipleDefinitions": "goto",
+    "editor.definitionLinkOpensInPeek": false
 }

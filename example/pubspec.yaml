@@ -11,13 +11,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  s_webview:
+  s_webview: 
     path: ../
+
+  webviewx2: ^2.1.0
+  s_dropdown: ^2.1.0
+  s_toggle: ^2.0.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  
+
+dependency_overrides:
 
 flutter:
   uses-material-design: true

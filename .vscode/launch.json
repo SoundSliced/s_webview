@@ -1,0 +1,21 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+        {
+            "name": "Flutter Web",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "chrome",
+            "flutterMode": "debug",
+            "preLaunchTask": "Kill Port 8082",
+            "args": [
+              "-d",
+              "chrome",
+              "--web-port=8082",
+              "--web-hostname=localhost",
+              "--web-browser-flag=--disable-extensions"
+            ],
+            "program": "example/lib/main.dart"
+          },
+	]
+}
