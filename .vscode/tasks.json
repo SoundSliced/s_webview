@@ -165,6 +165,13 @@
 				"reveal": "silent",
 				"panel": "shared"
 			}
+		},
+		{
+			"label": "Git Commit Fix",
+			"type": "shell",
+			"command": "git commit -m \"Fix pub.dev platform support analysis by removing direct platform package imports\"",
+			"isBackground": false,
+			"group": "none"
 		}
 	]
 }

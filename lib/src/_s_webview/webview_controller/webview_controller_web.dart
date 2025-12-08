@@ -4,10 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
 import 'package:webview_flutter/webview_flutter.dart' as webview_flutter;
-import 'package:webview_flutter_android/webview_flutter_android.dart'
-    as webview_flutter_android;
-import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart'
-    as webview_flutter_wkwebview;
 import '../webview_desktop/webview_desktop.dart' as webview_desktop;
 
 /// Cookie management data class
@@ -146,19 +142,9 @@ class WebViewController {
     this.proxyUrl = proxyUrl;
 
     if (is_mobile) {
-      late final webview_flutter.PlatformWebViewControllerCreationParams params;
-      if (webview_flutter.WebViewPlatform.instance
-          is webview_flutter_wkwebview.WebKitWebViewPlatform) {
-        params =
-            webview_flutter_wkwebview.WebKitWebViewControllerCreationParams(
-          allowsInlineMediaPlayback: true,
-          mediaTypesRequiringUserAction: const <webview_flutter_wkwebview
-              .PlaybackMediaTypes>{},
-        );
-      } else {
-        params =
-            const webview_flutter.PlatformWebViewControllerCreationParams();
-      }
+      final webview_flutter.PlatformWebViewControllerCreationParams params =
+          const webview_flutter.PlatformWebViewControllerCreationParams();
+
       webview_mobile_controller =
           webview_flutter.WebViewController.fromPlatformCreationParams(params);
       setState(() {});
@@ -230,12 +216,13 @@ Page resource error:
       }
 
       // #docregion platform_features
-      if (webview_mobile_controller.platform
-          is webview_flutter_android.AndroidWebViewController) {
-        webview_flutter_android.AndroidWebViewController.enableDebugging(false);
-        (webview_mobile_controller.platform
-                as webview_flutter_android.AndroidWebViewController)
-            .setMediaPlaybackRequiresUserGesture(false);
+      if (Platform.isAndroid) {
+        try {
+          (webview_mobile_controller.platform as dynamic)
+              .setMediaPlaybackRequiresUserGesture(false);
+        } catch (e) {
+          debugPrint('Error setting media playback requires user gesture: $e');
+        }
       }
       setState(() {});
       is_init = true;
