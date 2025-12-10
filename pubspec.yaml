@@ -16,13 +16,13 @@ dependencies:
   universal_html: ^2.3.0
   webview_flutter: ^4.13.0
   webview_flutter_android: ^4.10.11
-  webview_flutter_wkwebview: ^3.14.0
+  webview_flutter_wkwebview: ^3.23.5
   webview_flutter_web: ^0.2.3+4
   path: ^1.9.1
   flutter_animate: ^4.5.2
   ticker_free_circular_progress_indicator: ^1.0.0
   http: ^1.6.0
-  shared_preferences: ^2.5.3
+  shared_preferences: ^2.5.4
   pointer_interceptor: ^0.10.1+2
   desktop_webview_window: ^0.2.3
 

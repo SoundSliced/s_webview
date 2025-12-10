@@ -184,6 +184,31 @@
 			"label": "Commit v2.0.6",
 			"type": "shell",
 			"command": "git add . && git commit -m \"v2.0.6: Add federated plugin configuration for proper pub.dev platform detection\""
+		},
+		{
+			"label": "Push to GitHub",
+			"type": "shell",
+			"command": "git push"
+		},
+		{
+			"label": "Publish to pub.dev",
+			"type": "shell",
+			"command": "flutter pub publish"
+		},
+		{
+			"label": "Check publish warnings",
+			"type": "shell",
+			"command": "flutter pub publish --dry-run 2>&1 | cat"
+		},
+		{
+			"label": "Git status check",
+			"type": "shell",
+			"command": "git status"
+		},
+		{
+			"label": "Commit updated dependencies",
+			"type": "shell",
+			"command": "git add pubspec.yaml .vscode/tasks.json && git commit -m \"Update dependency versions\" && git push"
 		}
 	]
 }
