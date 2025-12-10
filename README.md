@@ -20,7 +20,7 @@ Add `s_webview` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  s_webview: ^2.0.3
+  s_webview: ^2.0.4
 ```
 
 ## Usage

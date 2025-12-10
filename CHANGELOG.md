@@ -1,3 +1,10 @@
+## 2.0.4
+
+* Fixed pub.dev platform detection by adding explicit platform-specific imports for all supported platforms
+* Added `_platforms.dart` with conditional imports for webview_flutter, webview_flutter_web, and desktop_webview_window
+* Now correctly detected as supporting iOS, Android, Web, Windows, macOS, and Linux
+* Added missing `universal_html` dependency to pubspec.yaml
+
 ## 2.0.3
 
 * 2nd attempt at Fixing pub.dev's cross-platform compatibility checks, we shall see
