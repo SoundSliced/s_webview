@@ -1,14 +1,4 @@
 
-## 2.0.7
-
-* README updated
-
-## 2.0.7
-
-* **WASM Compatibility**: Fixed WASM compatibility by replacing `universal_io` with Flutter's `defaultTargetPlatform`
-* Removed `universal_io` dependency (no longer needed)
-* All platform detection now uses `defaultTargetPlatform` from `package:flutter/foundation.dart`
-* Package is now fully compatible with Dart's WASM runtime for Web
 
 ## 2.0.7
 
