@@ -1,3 +1,7 @@
+## 2.0.3
+
+* 2nd attempt at Fixing pub.dev's cross-platform compatibility checks, we shall see
+
 ## 2.0.2
 
 * Fixed pub.dev's cross-platform compatibility checks, by removing certain conflicting dependencies
