@@ -1,3 +1,8 @@
+
+## 2.0.7
+
+* README updated
+
 ## 2.0.6
 
 * **Critical Fix**: Added federated plugin configuration to `pubspec.yaml` with `flutter.plugin.platforms` declaration

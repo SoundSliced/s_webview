@@ -214,6 +214,11 @@
 			"label": "Final dry run",
 			"type": "shell",
 			"command": "flutter pub publish --dry-run"
+		},
+		{
+			"label": "Publish v2.0.6",
+			"type": "shell",
+			"command": "echo y | flutter pub publish"
 		}
 	]
 }
