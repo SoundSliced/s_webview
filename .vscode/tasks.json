@@ -179,6 +179,11 @@
 			"command": "git commit -m \"Fix pub.dev platform support analysis by removing direct platform package imports\"",
 			"isBackground": false,
 			"group": "none"
+		},
+		{
+			"label": "Commit v2.0.6",
+			"type": "shell",
+			"command": "git add . && git commit -m \"v2.0.6: Add federated plugin configuration for proper pub.dev platform detection\""
 		}
 	]
 }

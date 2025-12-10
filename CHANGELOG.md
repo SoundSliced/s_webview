@@ -1,3 +1,15 @@
+## 2.0.6
+
+* **Critical Fix**: Added federated plugin configuration to `pubspec.yaml` with `flutter.plugin.platforms` declaration
+* This is the correct way for wrapper packages to declare platform support to pub.dev
+* Added explicit platform package dependencies:
+  - `webview_flutter_android` for Android
+  - `webview_flutter_wkwebview` for iOS  
+  - `webview_flutter_web` for Web
+  - `desktop_webview_window` for Windows/macOS/Linux
+* Platform configuration properly delegates to underlying platform implementations
+* Formatted all platform-specific Dart files to pass static analysis
+
 ## 2.0.5
 
 * **Major Fix**: Created proper platform-specific Dart files (`ios.dart`, `android.dart`, `web.dart`, `windows.dart`, `macos.dart`, `linux.dart`) that pub.dev can analyze
