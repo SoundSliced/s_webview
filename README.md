@@ -20,8 +20,65 @@ Add `s_webview` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  s_webview: ^2.0.4
+  s_webview: ^2.0.5
 ```
+
+## Platform Requirements
+
+### iOS
+- **Minimum Version**: iOS 11.0 or higher
+- **Setup**: No additional configuration needed. The package uses Flutter's built-in `webview_flutter` plugin
+- **Dependencies**: Handled automatically by `webview_flutter` package
+
+### Android
+- **Minimum Version**: Android 4.4 (API level 19) or higher
+- **Setup**: No additional configuration needed. The package uses Flutter's built-in `webview_flutter` plugin
+- **Permissions**: Internet permission is automatically added to `AndroidManifest.xml` by Flutter
+- **Dependencies**: Handled automatically by `webview_flutter` package
+
+### Web
+- **Browser Support**: All modern browsers (Chrome, Firefox, Safari, Edge)
+- **Features**: 
+  - Automatic CORS proxy detection and application
+  - Configurable proxy URLs via `corsProxyUrls` parameter
+  - Auto-detection of X-Frame-Options and CSP restrictions
+- **Dependencies**: Handled automatically by `webview_flutter_web` package
+
+### Windows
+- **Minimum Version**: Windows 7 or higher
+- **Requirements**: 
+  - **WebView2 Runtime** must be installed ([Download here](https://developer.microsoft.com/en-us/microsoft-edge/webview2/))
+  - Visual C++ Redistributable (usually pre-installed on modern Windows)
+- **Setup**: Users must install WebView2 Runtime if not already present
+- **Note**: The package will throw an error if WebView2 runtime is not available
+
+### macOS
+- **Minimum Version**: macOS 10.10 or higher
+- **Setup**: 
+  - Requires Xcode command line tools
+  - Ensure your Flutter/Xcode project includes the WebKit framework (handled by Flutter by default)
+  - May require adding WebKit capability in Xcode signing
+- **Dependencies**: Uses native WKWebView (built-in to macOS)
+
+### Linux
+- **Minimum Version**: Any modern Linux distribution with GTK 3.0+
+- **Requirements**: WebKitGTK libraries must be installed
+- **Installation**:
+  - **Ubuntu/Debian**: 
+    ```bash
+    sudo apt-get install libwebkit2gtk-4.0-dev
+    # or for newer versions:
+    sudo apt-get install libwebkit2gtk-4.1-dev
+    ```
+  - **Fedora/RHEL**: 
+    ```bash
+    sudo dnf install webkit2-gtk3-devel
+    ```
+  - **Arch Linux**: 
+    ```bash
+    sudo pacman -S webkit2gtk
+    ```
+- **Note**: Without WebKitGTK installed, the app will fail to run on Linux
 
 ## Usage
 

@@ -1,3 +1,10 @@
+## 2.0.5
+
+* **Major Fix**: Created proper platform-specific Dart files (`ios.dart`, `android.dart`, `web.dart`, `windows.dart`, `macos.dart`, `linux.dart`) that pub.dev can analyze
+* Added explicit platform dependencies: `webview_flutter_android` for Android detection
+* This enables pub.dev to correctly identify support for all 6 platforms through static analysis
+* Platform detection now works for: iOS, Android, Web, Windows, macOS, and Linux
+
 ## 2.0.4
 
 * Fixed pub.dev platform detection by adding explicit platform-specific imports for all supported platforms
