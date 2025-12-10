@@ -4,6 +4,11 @@
 * ensured fixed Tests, and analysis issues, pub.dev's platform compatibility detection issues  
 * updated documentations
 * Now perfectly running as expected
+* WASM compatibility:
+  - Replaced universal_html with package:web, The official WASM-compatible package for browser APIs
+  - universal_html uses dart:html internally which is NOT WASM-compatible
+  - package:web (version 1.1.1) is the Dart team's official WASM-compatible replacement
+  
 
 
 ## 2.0.8
