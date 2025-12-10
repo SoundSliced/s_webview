@@ -2,7 +2,6 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:universal_io/io.dart';
 import 'package:webview_flutter/webview_flutter.dart' as webview_flutter;
 import '../webview_desktop/webview_desktop.dart' as webview_desktop;
 
@@ -75,12 +74,15 @@ class WebViewController {
   bool is_init = false;
 
   /// Whether the current platform is desktop (Windows, macOS, Linux).
-  final bool is_desktop =
-      ((Platform.isLinux || Platform.isMacOS || Platform.isWindows) &&
-          kIsWeb == false);
+  final bool is_desktop = !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.macOS ||
+          defaultTargetPlatform == TargetPlatform.windows);
 
   /// Whether the current platform is mobile (iOS, Android, Web).
-  final bool is_mobile = (Platform.isAndroid || Platform.isIOS || kIsWeb);
+  final bool is_mobile = kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
 
   /// Custom HTTP headers to be sent with requests
   Map<String, String> customHeaders = {};
@@ -216,7 +218,7 @@ Page resource error:
       }
 
       // #docregion platform_features
-      if (Platform.isAndroid) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         try {
           (webview_mobile_controller.platform as dynamic)
               .setMediaPlaybackRequiresUserGesture(false);
@@ -233,7 +235,8 @@ Page resource error:
         final webview_desktop.Webview localWebviewController =
             await webview_desktop.WebviewWindow.create(
           configuration: webview_desktop.CreateConfiguration(
-            titleBarTopPadding: Platform.isMacOS ? 20 : 0,
+            titleBarTopPadding:
+                defaultTargetPlatform == TargetPlatform.macOS ? 20 : 0,
           ),
         );
         webview_desktop_controller = localWebviewController;

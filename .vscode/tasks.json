@@ -219,6 +219,11 @@
 			"label": "Publish v2.0.6",
 			"type": "shell",
 			"command": "echo y | flutter pub publish"
+		},
+		{
+			"label": "Commit and push v2.0.7",
+			"type": "shell",
+			"command": "git add . && git commit -m \"v2.0.7: Fix WASM compatibility by removing universal_io\" && git push"
 		}
 	]
 }

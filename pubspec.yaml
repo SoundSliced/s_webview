@@ -12,7 +12,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  universal_io: ^2.3.1
   universal_html: ^2.3.0
   webview_flutter: ^4.13.0
   webview_flutter_android: ^4.10.11

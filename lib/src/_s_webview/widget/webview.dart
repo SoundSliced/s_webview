@@ -1,4 +1,3 @@
-import 'package:universal_io/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart' as webview_flutter;
@@ -38,7 +37,9 @@ class WebView extends StatelessWidget {
     }
 
     // Mobile platforms (Android, iOS, Web) use webview_flutter
-    if (Platform.isAndroid || Platform.isIOS || kIsWeb) {
+    if (kIsWeb ||
+        defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS) {
       return Visibility(
         visible: controller.is_init,
         replacement: const SizedBox.shrink(),
@@ -50,7 +51,10 @@ class WebView extends StatelessWidget {
 
     // Desktop platforms (Windows, macOS, Linux) use webview_window
     // The webview_window creates a native webview that displays the content
-    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    if (!kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.windows ||
+            defaultTargetPlatform == TargetPlatform.macOS ||
+            defaultTargetPlatform == TargetPlatform.linux)) {
       // webview_window handles rendering natively; return a placeholder
       // that indicates the desktop webview is initialized and displaying
       return Visibility(
