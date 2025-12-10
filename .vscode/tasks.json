@@ -229,6 +229,61 @@
 			"label": "Publish v2.0.7",
 			"type": "shell",
 			"command": "echo y | flutter pub publish"
+		},
+		{
+			"label": "Run MyWebView Test Custom",
+			"type": "shell",
+			"command": "flutter test test/s_webview_test.dart"
+		},
+		{
+			"label": "Run SWebView Test",
+			"type": "shell",
+			"command": "flutter test test/s_webview_test.dart"
+		},
+		{
+			"label": "Run Flutter Tests Verbose",
+			"type": "shell",
+			"command": "cd /Users/christophechanteur/Development/Flutter_projects/my_extensions/done/s_webview && flutter test test/s_webview_test.dart --reporter expanded 2>&1 | tail -100"
+		},
+		{
+			"label": "Test Output",
+			"type": "shell",
+			"command": "cd /Users/christophechanteur/Development/Flutter_projects/my_extensions/done/s_webview && flutter test test/s_webview_test.dart 2>&1 | tail -50"
+		},
+		{
+			"label": "Verbose Test",
+			"type": "shell",
+			"command": "cd /Users/christophechanteur/Development/Flutter_projects/my_extensions/done/s_webview && flutter test test/s_webview_test.dart --reporter expanded"
+		},
+		{
+			"label": "Test Start Output",
+			"type": "shell",
+			"command": "cd /Users/christophechanteur/Development/Flutter_projects/my_extensions/done/s_webview && flutter test test/s_webview_test.dart 2>&1 | head -60"
+		},
+		{
+			"label": "Test Failures",
+			"type": "shell",
+			"command": "cd /Users/christophechanteur/Development/Flutter_projects/my_extensions/done/s_webview && flutter test test/s_webview_test.dart --reporter expanded 2>&1 | grep -A 20 'FAILED\\|Expected\\|Error\\|Exception'"
+		},
+		{
+			"label": "Test Detail",
+			"type": "shell",
+			"command": "cd /Users/christophechanteur/Development/Flutter_projects/my_extensions/done/s_webview && flutter test test/s_webview_test.dart --reporter expanded 2>&1 | head -80"
+		},
+		{
+			"label": "Test Errors",
+			"type": "shell",
+			"command": "cd /Users/christophechanteur/Development/Flutter_projects/my_extensions/done/s_webview && flutter test test/s_webview_test.dart 2>&1 | head -50"
+		},
+		{
+			"label": "Full Test",
+			"type": "shell",
+			"command": "cd /Users/christophechanteur/Development/Flutter_projects/my_extensions/done/s_webview && flutter test test/s_webview_test.dart --reporter expanded 2>&1"
+		},
+		{
+			"label": "Filter Tests",
+			"type": "shell",
+			"command": "cd /Users/christophechanteur/Development/Flutter_projects/my_extensions/done/s_webview && flutter test test/s_webview_test.dart 2>&1 | grep -E '(SWebView Widget Tests|EXCEPTION|Timer|Failed)' | head -30"
 		}
 	]
 }

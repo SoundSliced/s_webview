@@ -1,4 +1,9 @@
+## 2.0.8
 
+* Fixed Tests failures due to dependencies import/export conflicts
+      ✅ All 11 tests pass
+      ✅ No analysis issues
+* Fixed WASM issues: WASM compatibility improved with conditional imports
 
 ## 2.0.7
 

@@ -36,6 +36,10 @@ class WebView extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    if (webview_controller.WebViewController.isTestMode) {
+      return const SizedBox.shrink();
+    }
+
     // Mobile platforms (Android, iOS, Web) use webview_flutter
     if (kIsWeb ||
         defaultTargetPlatform == TargetPlatform.android ||

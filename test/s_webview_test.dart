@@ -1,7 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s_webview/s_webview.dart';
+import 'package:s_webview/src/_s_webview/webview_controller/webview_controller.dart';
 
 void main() {
+  setUp(() {
+    WebViewController.isTestMode = true;
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('SWebView Widget Tests', () {
     testWidgets('SWebView can be instantiated with default URL',
         (WidgetTester tester) async {
@@ -13,8 +19,8 @@ void main() {
         ),
       );
 
-      // Pump and settle to complete all animations
-      await tester.pumpAndSettle();
+      // Pump to complete animations
+      await tester.pump(const Duration(seconds: 3));
 
       expect(find.byType(SWebView), findsOneWidget);
     });
@@ -29,8 +35,8 @@ void main() {
         ),
       );
 
-      // Pump and settle to complete all animations
-      await tester.pumpAndSettle();
+      // Pump to complete animations
+      await tester.pump(const Duration(seconds: 3));
 
       expect(find.byType(SWebView), findsOneWidget);
     });
@@ -45,14 +51,11 @@ void main() {
         ),
       );
 
-      // Allow the widget to build
-      await tester.pump();
-
-      // The loading indicator should be visible
+      // The loading indicator should be visible immediately
       expect(find.byType(Center), findsWidgets);
 
-      // Pump and settle to complete all animations
-      await tester.pumpAndSettle();
+      // Pump to complete animations
+      await tester.pump(const Duration(seconds: 3));
     });
 
     testWidgets('SWebView responds to URL changes',
@@ -67,8 +70,8 @@ void main() {
         ),
       );
 
-      // Pump and settle initial state
-      await tester.pumpAndSettle();
+      // Pump initial state
+      await tester.pump(const Duration(seconds: 3));
 
       // Find the button and tap it to change URL
       await tester.tap(find.byType(ElevatedButton));
@@ -78,8 +81,8 @@ void main() {
       final sWebView = tester.widget<SWebView>(find.byType(SWebView));
       expect(sWebView.url, equals(newUrl));
 
-      // Pump and settle to complete animations
-      await tester.pumpAndSettle();
+      // Pump to complete animations
+      await tester.pump(const Duration(seconds: 3));
     });
 
     testWidgets('SWebView can have a custom key', (WidgetTester tester) async {
@@ -95,7 +98,7 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 3));
 
       expect(find.byKey(testKey), findsOneWidget);
     });

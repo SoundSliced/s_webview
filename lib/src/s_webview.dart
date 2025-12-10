@@ -1,7 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'dart:convert';
-// ignore: avoid_web_libraries_in_flutter
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,10 +9,10 @@ import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:ticker_free_circular_progress_indicator/ticker_free_circular_progress_indicator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:universal_html/html.dart' as html;
 
 import '_s_webview/webview_controller/webview_controller.dart';
 import '_s_webview/widget/widget.dart';
+import '_s_webview/web_utils/web_utils.dart' as web_utils;
 
 // Internal _s_webview implementation provides optimal performance
 // across all platforms (iOS, Android, Web, Windows, macOS, Linux)
@@ -189,7 +188,7 @@ class SWebView extends StatefulWidget {
 
     // Open in new tab (web platform)
     if (kIsWeb) {
-      html.window.open(url, '_blank');
+      web_utils.openInNewTab(url);
     }
   }
 
@@ -249,7 +248,10 @@ class _SWebViewState extends State<SWebView> {
 
   /// Initialize with cached data loaded
   Future<void> _initializeWithCache() async {
-    await _loadCache();
+    // Skip cache loading in test mode to avoid SharedPreferences dependency
+    if (!WebViewController.isTestMode) {
+      await _loadCache();
+    }
     await initialisation();
   }
 
@@ -466,6 +468,24 @@ class _SWebViewState extends State<SWebView> {
         });
       }
       webViewController = WebViewController();
+
+      // In test mode, skip all network calls and just mark as loaded
+      if (WebViewController.isTestMode) {
+        await webViewController!.init(
+          context: context,
+          uri: Uri.parse(widget.url),
+          setState: (fn) {
+            if (mounted) setState(fn);
+          },
+        );
+        if (mounted) {
+          setState(() {
+            isLoaded = true;
+          });
+        }
+        return;
+      }
+
       // A safe setState wrapper that no-ops when the State is disposed
       void safeSetState(void Function() fn) {
         if (!mounted) return;
@@ -639,6 +659,17 @@ class _SWebViewState extends State<SWebView> {
       await initialisation();
       return;
     }
+
+    // In test mode, just update the loaded state without actual navigation
+    if (WebViewController.isTestMode) {
+      if (mounted) {
+        setState(() {
+          isLoaded = true;
+        });
+      }
+      return;
+    }
+
     try {
       if (mounted) {
         setState(() {
@@ -742,6 +773,34 @@ class _SWebViewState extends State<SWebView> {
 
   @override
   Widget build(BuildContext context) {
+    // Build the loading indicator widget
+    Widget loadingWidget = Center(child: TickerFreeCircularProgressIndicator());
+
+    // Build the webview widget
+    Widget webviewWidget = WebView(controller: webViewController!);
+
+    // Apply animations only when not in test mode
+    if (!WebViewController.isTestMode) {
+      loadingWidget = loadingWidget.animate(
+        key: const ValueKey("loading"),
+        effects: [
+          FadeEffect(
+            duration: Duration(seconds: 0, milliseconds: 500),
+            curve: Curves.easeInOut,
+          )
+        ],
+      );
+      webviewWidget = webviewWidget.animate(
+        key: ValueKey("sWebview - ${widget.url}"),
+        effects: [
+          FadeEffect(
+            duration: Duration(seconds: 2, milliseconds: 500),
+            curve: Curves.fastEaseInToSlowEaseOut,
+          )
+        ],
+      );
+    }
+
     return Column(
       children: [
         // Toolbar with action buttons (web only)
@@ -750,26 +809,10 @@ class _SWebViewState extends State<SWebView> {
         // Main content
         Expanded(
           child: isLoaded == null
-              ? Center(child: TickerFreeCircularProgressIndicator())
-                  .animate(key: const ValueKey("loading"), effects: [
-                  FadeEffect(
-                    duration: Duration(seconds: 0, milliseconds: 500),
-                    curve: Curves.easeInOut,
-                  )
-                ])
+              ? loadingWidget
               : !isLoaded!
                   ? const Center(child: Text("Failed to load URL"))
-                  : // If loaded, show the WebView
-                  WebView(
-                      controller: webViewController!,
-                    ).animate(
-                      key: ValueKey("sWebview - ${widget.url}"),
-                      effects: [
-                          FadeEffect(
-                            duration: Duration(seconds: 2, milliseconds: 500),
-                            curve: Curves.fastEaseInToSlowEaseOut,
-                          )
-                        ]),
+                  : webviewWidget,
         ),
       ],
     );

@@ -6,9 +6,12 @@
 library;
 
 // Import all platform implementations
+// Web platform is conditionally exported to avoid loading dart:js_interop in tests
 export 'package:s_webview/src/_platforms/ios.dart';
 export 'package:s_webview/src/_platforms/android.dart';
-export 'package:s_webview/src/_platforms/web.dart';
+export 'package:s_webview/src/_platforms/web_stub.dart'
+    if (dart.library.js_interop) 'package:s_webview/src/_platforms/web.dart'
+    if (dart.library.html) 'package:s_webview/src/_platforms/web.dart';
 export 'package:s_webview/src/_platforms/windows.dart';
 export 'package:s_webview/src/_platforms/macos.dart';
 export 'package:s_webview/src/_platforms/linux.dart';

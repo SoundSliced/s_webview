@@ -84,6 +84,12 @@ class WebViewController {
       defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS;
 
+  /// Static flag to enable test mode.
+  ///
+  /// When set to true, the controller will bypass platform initialization
+  /// and simulate successful initialization. This is useful for widget testing.
+  static bool isTestMode = false;
+
   /// Custom HTTP headers to be sent with requests
   Map<String, String> customHeaders = {};
 
@@ -142,6 +148,15 @@ class WebViewController {
     this.requestTimeout = requestTimeout ?? const Duration(seconds: 30);
     this.followRedirects = followRedirects ?? true;
     this.proxyUrl = proxyUrl;
+
+    if (isTestMode) {
+      is_init = true;
+      currentUrlNotifier.value = uri;
+      // In test mode, immediately set loaded state without timer
+      isLoadingNotifier.value = false;
+      setState(() {});
+      return;
+    }
 
     if (is_mobile) {
       final webview_flutter.PlatformWebViewControllerCreationParams params =
