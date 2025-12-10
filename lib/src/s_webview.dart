@@ -776,8 +776,11 @@ class _SWebViewState extends State<SWebView> {
     // Build the loading indicator widget
     Widget loadingWidget = Center(child: TickerFreeCircularProgressIndicator());
 
-    // Build the webview widget
-    Widget webviewWidget = WebView(controller: webViewController!);
+    // Build the webview widget only if controller is initialized
+    Widget webviewWidget =
+        webViewController != null && webViewController!.is_init
+            ? WebView(controller: webViewController!)
+            : const SizedBox.shrink();
 
     // Apply animations only when not in test mode
     if (!WebViewController.isTestMode) {

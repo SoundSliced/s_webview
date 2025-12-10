@@ -1,3 +1,10 @@
+## 2.1.0
+
+* Changed the `SWebView`'s build method to safely handle the case when webViewController is null (which happens on the first build before async initialization completes)
+* ensured fixed Tests, and analysis issues, pub.dev's platform compatibility detection issues  
+* updated documentations
+* Now perfectly running as expected
+
 ## 2.0.8
 
 * Fixed Tests failures due to dependencies import/export conflicts
