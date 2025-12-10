@@ -2,11 +2,13 @@
 ///
 /// This file is only loaded on web platforms and provides
 /// access to browser-specific functionality.
+///
+/// Uses `package:web` for WASM compatibility instead of `dart:html`.
 library;
 
-import 'package:universal_html/html.dart' as html;
+import 'package:web/web.dart' as web;
 
 /// Opens a URL in a new browser tab (web platform only).
 void openInNewTab(String url) {
-  html.window.open(url, '_blank');
+  web.window.open(url, '_blank');
 }

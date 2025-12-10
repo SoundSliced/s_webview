@@ -12,7 +12,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  universal_html: ^2.3.0
+  web: ^1.1.1
   webview_flutter: ^4.13.0
   webview_flutter_android: ^4.10.11
   webview_flutter_wkwebview: ^3.23.5
