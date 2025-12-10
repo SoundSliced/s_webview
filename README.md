@@ -20,7 +20,7 @@ Add `s_webview` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  s_webview: ^2.0.5
+  s_webview: ^2.0.
 ```
 
 ## Platform Requirements
@@ -45,7 +45,7 @@ dependencies:
 - **Dependencies**: Handled automatically by `webview_flutter_web` package
 
 ### Windows
-- **Minimum Version**: Windows 7 or higher
+- **Minimum Version**: Windows 7 or higher6
 - **Requirements**: 
   - **WebView2 Runtime** must be installed ([Download here](https://developer.microsoft.com/en-us/microsoft-edge/webview2/))
   - Visual C++ Redistributable (usually pre-installed on modern Windows)

@@ -209,6 +209,11 @@
 			"label": "Commit updated dependencies",
 			"type": "shell",
 			"command": "git add pubspec.yaml .vscode/tasks.json && git commit -m \"Update dependency versions\" && git push"
+		},
+		{
+			"label": "Final dry run",
+			"type": "shell",
+			"command": "flutter pub publish --dry-run"
 		}
 	]
 }
