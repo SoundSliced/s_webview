@@ -171,7 +171,7 @@ class WebviewWindow {
   }) async {
     await _channel.invokeMethod('clearAll');
 
-    // FIXME(boyan01) Move the logic to windows platform if WebView2 provider a way to clean caches.
+    // (FIXME(boyan01) Move the logic to windows platform if WebView2 provider a way to clean caches.)
     // https://docs.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder#create-user-data-folders
     if (Platform.isWindows) {
       final Directory webview2Dir;
