@@ -5,147 +5,130 @@ set -euo pipefail
 # This script handles package renaming, verification, GitHub repo creation, and pub.dev publishing
 # Run this script from your package root directory (where pubspec.yaml is located)
 
+# Constants
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly REPO_ROOT="${SCRIPT_DIR%/*}"
+
 # Color codes for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m' # No Color
 
-# Function to print colored output
-print_info() {
-    echo -e "${BLUE}INFO:${NC} $1"
-}
+# Global variables
+PACKAGE_NAME=""
+DESCRIPTION=""
+VERSION=""
+USERNAME=""
 
-print_success() {
-    echo -e "${GREEN}SUCCESS:${NC} $1"
-}
+# Logging functions
+print_info()    { echo -e "${BLUE}INFO:${NC} $1"; }
+print_success() { echo -e "${GREEN}SUCCESS:${NC} $1"; }
+print_warning() { echo -e "${YELLOW}WARNING:${NC} $1"; }
+print_error()   { echo -e "${RED}ERROR:${NC} $1"; }
 
-print_warning() {
-    echo -e "${YELLOW}WARNING:${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}ERROR:${NC} $1"
-}
-
-# Function to organize root-level shell scripts into scripts/ directory
-organize_shell_scripts() {
-    print_info "Organizing shell scripts in repository root..."
-    local repo_root="$PWD"
-    # Ensure we're at package root (pubspec.yaml should exist here)
-    if [[ ! -f "$repo_root/pubspec.yaml" ]]; then
-        print_warning "Current directory does not contain pubspec.yaml; skipping shell script organization."
-        return
+# Utility: confirm prompt (returns 0 for yes, 1 for no)
+confirm() {
+    local message="$1" default="${2:-n}" response
+    local prompt="[y/N]"
+    if [[ "$default" == "y" ]]; then
+        prompt="[Y/n]"
     fi
-    mkdir -p "$repo_root/scripts"
-    local moved_any=false
-    # Iterate over root-level .sh files (exclude glob if none)
-    for f in "$repo_root"/*.sh; do
-        if [[ ! -e "$f" ]]; then
-            continue
-        fi
-        local base_name="$(basename "$f")"
-        # Skip if already inside scripts or if file is this release script (which resides in scripts/)
-        if [[ "$f" == "$repo_root/scripts/release_publish.sh" ]]; then
-            continue
-        fi
-        # Move file
-        mv "$f" "$repo_root/scripts/" 2>/dev/null || {
-            print_warning "Could not move $base_name"
-            continue
-        }
-        print_info "Moved $base_name to scripts/"
-        moved_any=true
-    done
-    if [[ "$moved_any" == true ]]; then
-        print_success "Shell scripts consolidated into scripts/ directory."
+    
+    read -rp "$message $prompt: " response
+    response="${response:-$default}"
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        return 0
     else
-        print_info "No root-level shell scripts needed moving."
+        return 1
     fi
 }
 
-# Function to ensure .gitattributes excludes shell scripts from language stats
+# Utility: check if file contains pattern
+file_has_pattern() {
+    grep -qE "$2" "$1" 2>/dev/null
+}
+
+# Utility: add line after pattern in file (macOS compatible)
+add_line_after() {
+    local file="$1" pattern="$2" line="$3"
+    sed -i '' "/$pattern/a\\
+$line" "$file"
+}
+
+# Get package info from pubspec.yaml
+get_package_info() {
+    if [[ ! -f "pubspec.yaml" ]]; then
+        print_error "pubspec.yaml not found. Run from package root."
+        exit 1
+    fi
+    
+    PACKAGE_NAME=$(awk '/^name:/{print $2}' pubspec.yaml | tr -d ' ')
+    DESCRIPTION=$(awk '/^description:/{$1=""; print substr($0,2)}' pubspec.yaml | sed 's/^"\|"$//g')
+    VERSION=$(awk '/^version:/{print $2}' pubspec.yaml | tr -d ' ')
+    
+    if [[ -z "$PACKAGE_NAME" ]]; then
+        print_error "Could not find package name in pubspec.yaml"
+        exit 1
+    fi
+    
+    print_info "Package: $PACKAGE_NAME | Version: $VERSION"
+    return 0
+}
+
+# Organize root-level shell scripts into scripts/ directory
+organize_shell_scripts() {
+    [[ -f "pubspec.yaml" ]] || return 0
+    mkdir -p scripts
+    
+    local moved=false
+    for f in ./*.sh; do
+        [[ -e "$f" ]] || continue
+        mv "$f" scripts/ 2>/dev/null && { print_info "Moved $(basename "$f") to scripts/"; moved=true; }
+    done
+    
+    if [[ "$moved" == true ]]; then
+        print_success "Shell scripts consolidated into scripts/"
+    fi
+    return 0
+}
+
+# Ensure .gitattributes excludes shell scripts from language stats
 ensure_gitattributes() {
-    local repo_root="$PWD"
-    local file="$repo_root/.gitattributes"
+    local file=".gitattributes"
     touch "$file"
-    # Add linguist-vendored for all .sh scripts if not present
-    if ! grep -qE '^\*\.sh[[:space:]]+linguist-vendored' "$file"; then
+    
+    if ! file_has_pattern "$file" '^\*\.sh[[:space:]]+linguist-vendored'; then
         echo "*.sh linguist-vendored" >> "$file"
         print_info "Added '*.sh linguist-vendored' to .gitattributes"
     fi
-    # Add build/* linguist-generated to hide build artifacts
-    if ! grep -qE '^build/\*[[:space:]]+linguist-generated' "$file"; then
+    if ! file_has_pattern "$file" '^build/\*[[:space:]]+linguist-generated'; then
         echo "build/* linguist-generated" >> "$file"
         print_info "Added 'build/* linguist-generated' to .gitattributes"
     fi
-    print_success ".gitattributes updated for GitHub Linguist language detection."
+    return 0
 }
 
-# Function to create or update .pubignore to exclude scripts from published package
-ensure_pubignore() {
-    local repo_root="$PWD"
-    local file="$repo_root/.pubignore"
+# Create or update .gitignore
+ensure_gitignore() {
+    local file=".gitignore"
+    local is_git_repo=false
+    [[ -d .git ]] && is_git_repo=true
     
-    # Create .pubignore if it doesn't exist
     if [[ ! -f "$file" ]]; then
         cat > "$file" <<'EOF'
-# Exclude scripts directory from published package
-scripts/
-*.sh
-EOF
-        print_info "Created .pubignore to exclude scripts from published package"
-    else
-        # Add scripts/ if not present
-        if ! grep -q '^scripts/' "$file"; then
-            echo "scripts/" >> "$file"
-            print_info "Added 'scripts/' to .pubignore"
-        fi
-        # Add *.sh if not present
-        if ! grep -q '^\\.sh' "$file" && ! grep -q '^\\*\\.sh' "$file"; then
-            echo "*.sh" >> "$file"
-            print_info "Added '*.sh' to .pubignore"
-        fi
-    fi
-    
-    # Ensure build artifacts and other critical exclusions are present
-    local needs_update=false
-    
-    # Check for critical patterns
-    if ! grep -q '^build/' "$file"; then
-        needs_update=true
-    fi
-    if ! grep -q '^\.dart_tool/' "$file"; then
-        needs_update=true
-    fi
-    if ! grep -q '^example/build/' "$file"; then
-        needs_update=true
-    fi
-    
-    # If critical patterns are missing, append them
-    if [[ "$needs_update" == true ]]; then
-        print_info "Adding build artifact exclusions to .pubignore..."
-        
-        # Add newline if file doesn't end with one
-        if [[ -n "$(tail -c 1 "$file" 2>/dev/null)" ]]; then
-            echo "" >> "$file"
-        fi
-        
-        # Append comprehensive exclusions
-        cat >> "$file" <<'EOF'
-
-# Exclude build artifacts and cache directories
+# Dart/Flutter build artifacts
 build/
 .dart_tool/
 .packages
 
-# Exclude example build artifacts
+# Example build artifacts
 example/build/
 example/.dart_tool/
 example/.packages
 
-# Exclude IDE and editor files
+# IDE and editor files
 .vscode/
 .idea/
 *.iml
@@ -153,443 +136,326 @@ example/.packages
 *.swo
 *~
 
-# Exclude OS files
+# OS files
 .DS_Store
 Thumbs.db
 
-# Exclude test cache
+# Test cache
+test/.test_cache/
+.test_cache/
+
+# Generated files
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+
+# Coverage
+coverage/
+
+# Pubspec lock (optional for packages)
+# pubspec.lock
+EOF
+        print_info "Created .gitignore to exclude build artifacts"
+    else
+        # Add missing critical patterns
+        local patterns=("build/" ".dart_tool/" "example/build/" ".DS_Store")
+        for pattern in "${patterns[@]}"; do
+            if ! grep -q "^${pattern}$" "$file"; then
+                echo "$pattern" >> "$file"
+                print_info "Added '$pattern' to .gitignore"
+            fi
+        done
+    fi
+    
+    # Remove directories/files from git tracking if already tracked
+    if [[ "$is_git_repo" == true ]]; then
+        local dirs_to_untrack=("build/" ".dart_tool/" "example/build/" "example/.dart_tool/")
+        for dir in "${dirs_to_untrack[@]}"; do
+            if git ls-files --error-unmatch "$dir" >/dev/null 2>&1; then
+                print_info "Removing $dir from git tracking..."
+                git rm -r --cached "$dir" 2>/dev/null || true
+            fi
+        done
+        
+        # Remove .DS_Store files from git tracking
+        local ds_files
+        ds_files=$(git ls-files '*.DS_Store' '.DS_Store' '*/.DS_Store' 2>/dev/null)
+        if [[ -n "$ds_files" ]]; then
+            print_info "Removing .DS_Store files from git tracking..."
+            echo "$ds_files" | xargs git rm --cached 2>/dev/null || true
+        fi
+        
+        print_success "Ignored files removed from git tracking"
+    fi
+    return 0
+}
+
+# Create or update .pubignore
+ensure_pubignore() {
+    local file=".pubignore"
+    
+    if [[ ! -f "$file" ]]; then
+        cat > "$file" <<'EOF'
+# Scripts
+scripts/
+*.sh
+
+# Build artifacts and cache
+build/
+.dart_tool/
+.packages
+example/build/
+example/.dart_tool/
+example/.packages
+
+# IDE and editor files
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test cache
 test/.test_cache/
 .test_cache/
 EOF
-        print_success "Added comprehensive exclusions to .pubignore"
+        print_info "Created .pubignore with comprehensive exclusions"
+        return 0
     fi
+    
+    # Add missing patterns
+    local patterns=("scripts/" "*.sh" "build/" ".dart_tool/" "example/build/")
+    for pattern in "${patterns[@]}"; do
+        if ! grep -q "^${pattern}$" "$file"; then
+            echo "$pattern" >> "$file"
+        fi
+    done
+    return 0
 }
 
-# Function to commit pending changes before verification
+# Check for uncommitted changes and commit
 commit_changes() {
-    # Check if there are any changes to commit
-    if ! git diff --quiet || ! git diff --cached --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
-        print_info "Committing changes before verification..."
-        
-        # Add all modified and new files
-        git add -A
-        
-        # Create commit message
-        local commit_msg="Update package to version $VERSION
-
-- Updated version to $VERSION
-- Updated documentation (CHANGELOG.md, README.md)
-- Organized shell scripts into scripts/ directory
-- Added .gitattributes for GitHub Linguist
-- Added .pubignore to exclude scripts from published package"
-        
-        git commit -m "$commit_msg" || {
-            print_warning "Git commit failed or nothing to commit"
-            return 1
-        }
-        
-        print_success "Changes committed successfully"
-    else
-        print_info "No changes to commit, working directory is clean"
+    local has_changes=false
+    git diff --quiet 2>/dev/null || has_changes=true
+    git diff --cached --quiet 2>/dev/null || has_changes=true
+    [[ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ]] && has_changes=true
+    
+    if [[ "$has_changes" == false ]]; then
+        print_info "Working directory clean, nothing to commit"
+        return 0
     fi
+    
+    print_info "Committing changes..."
+    git add -A
+    git commit -m "Release version $VERSION
+
+- Updated version, documentation, and configuration
+- Organized scripts and added .gitattributes/.pubignore" || print_warning "Nothing to commit"
+    return 0
 }
 
-# Function to prompt user for confirmation
-confirm() {
-    local message="$1"
-    local default="${2:-n}"
-    local response
-
-    if [[ "$default" == "y" ]]; then
-        read -p "$message [Y/n]: " response
-        response=${response:-y}
-    else
-        read -p "$message [y/N]: " response
-        response=${response:-n}
-    fi
-
-    [[ "$response" =~ ^[Yy]$ ]]
-}
-
-# Function to get package info from pubspec.yaml
-get_package_info() {
-    if [[ ! -f "pubspec.yaml" ]]; then
-        print_error "pubspec.yaml not found. Please run this script from your package root directory."
-        exit 1
-    fi
-
-    PACKAGE_NAME=$(grep '^name:' pubspec.yaml | sed 's/name: //' | tr -d ' ')
-    DESCRIPTION=$(grep '^description:' pubspec.yaml | sed 's/description: //' | tr -d '\n' | sed 's/^"//' | sed 's/"$//')
-    VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
-
-    if [[ -z "$PACKAGE_NAME" ]]; then
-        print_error "Could not find package name in pubspec.yaml"
-        exit 1
-    fi
-
-    print_info "Package: $PACKAGE_NAME"
-    print_info "Version: $VERSION"
-    print_info "Description: $DESCRIPTION"
-}
-
-# Function to update version across all files
+# Update version in pubspec.yaml and add CHANGELOG entry
 update_version() {
     local new_version="$1"
-    local old_version="$VERSION"
+    if [[ "$new_version" == "$VERSION" ]]; then
+        return 0
+    fi
     
-    print_info "Updating version from $old_version to $new_version in all files..."
+    print_info "Updating version from $VERSION to $new_version..."
     
     # Update pubspec.yaml
     sed -i '' "s/^version: .*/version: $new_version/" pubspec.yaml
     
-    # Update CHANGELOG.md - add new version entry at the top if not present
-    if [[ -f "CHANGELOG.md" ]]; then
-        if ! grep -q "## $new_version" CHANGELOG.md; then
-            # Create a temporary file with the new version entry
-            {
-                echo "## $new_version"
-                echo ""
-                echo "* Version $new_version"
-                echo ""
-                cat CHANGELOG.md
-            } > CHANGELOG.md.tmp
-            mv CHANGELOG.md.tmp CHANGELOG.md
-        fi
+    # Update CHANGELOG.md
+    if [[ -f "CHANGELOG.md" ]] && ! grep -q "## $new_version" CHANGELOG.md; then
+        { echo -e "## $new_version\n\n* Version $new_version\n"; cat CHANGELOG.md; } > CHANGELOG.md.tmp
+        mv CHANGELOG.md.tmp CHANGELOG.md
     fi
     
-    # Update README.md - replace version references
+    # Update README.md version references
     if [[ -f "README.md" ]]; then
-        # Update version badge if present
-        sed -i '' "s/version-[0-9]\+\.[0-9]\+\.[0-9]\+/version-$new_version/g" README.md
-        # Update version in dependencies examples
-        sed -i '' "s/$PACKAGE_NAME: \^[0-9]\+\.[0-9]\+\.[0-9]\+/$PACKAGE_NAME: ^$new_version/g" README.md
-        sed -i '' "s/$PACKAGE_NAME: [0-9]\+\.[0-9]\+\.[0-9]\+/$PACKAGE_NAME: $new_version/g" README.md
+        sed -i '' -e "s/version-[0-9]\+\.[0-9]\+\.[0-9]\+/version-$new_version/g" \
+                  -e "s/$PACKAGE_NAME: \^[0-9]\+\.[0-9]\+\.[0-9]\+/$PACKAGE_NAME: ^$new_version/g" \
+                  -e "s/$PACKAGE_NAME: [0-9]\+\.[0-9]\+\.[0-9]\+/$PACKAGE_NAME: $new_version/g" README.md
     fi
     
     VERSION="$new_version"
     print_success "Version updated to $new_version"
+    return 0
 }
 
-# Function to update GitHub username across all files
+# Update GitHub username in all relevant files
 update_github_username() {
-    local username="$1"
-    local old_username="${2:-}"
+    local username="$1" old_username="${2:-}"
+    print_info "Updating GitHub username to '$username'..."
     
-    print_info "Updating GitHub username to '$username' in all files..."
+    local github_url="https://github.com/$username/$PACKAGE_NAME"
     
-    # Update pubspec.yaml
-    if grep -q "^homepage:" pubspec.yaml; then
-        if [[ -n "$old_username" ]]; then
-            sed -i '' "s|https://github.com/$old_username/|https://github.com/$username/|g" pubspec.yaml
+    # Update pubspec.yaml URLs
+    for field in homepage repository issue_tracker; do
+        local url="$github_url"
+        [[ "$field" == "issue_tracker" ]] && url="$github_url/issues"
+        
+        if grep -q "^${field}:" pubspec.yaml; then
+            sed -i '' "s|^${field}:.*|${field}: $url|" pubspec.yaml
         else
-            sed -i '' "s|^homepage:.*|homepage: https://github.com/$username/$PACKAGE_NAME|" pubspec.yaml
-        fi
-    else
-        sed -i '' "/^description:/a\\
-homepage: https://github.com/$username/$PACKAGE_NAME" pubspec.yaml
-    fi
-    
-    if grep -q "^repository:" pubspec.yaml; then
-        if [[ -n "$old_username" ]]; then
-            sed -i '' "s|https://github.com/$old_username/|https://github.com/$username/|g" pubspec.yaml
-        else
-            sed -i '' "s|^repository:.*|repository: https://github.com/$username/$PACKAGE_NAME|" pubspec.yaml
-        fi
-    else
-        sed -i '' "/^description:/a\\
-repository: https://github.com/$username/$PACKAGE_NAME" pubspec.yaml
-    fi
-    
-    if grep -q "^issue_tracker:" pubspec.yaml; then
-        if [[ -n "$old_username" ]]; then
-            sed -i '' "s|https://github.com/$old_username/|https://github.com/$username/|g" pubspec.yaml
-        else
-            sed -i '' "s|^issue_tracker:.*|issue_tracker: https://github.com/$username/$PACKAGE_NAME/issues|" pubspec.yaml
-        fi
-    else
-        sed -i '' "/^description:/a\\
-issue_tracker: https://github.com/$username/$PACKAGE_NAME/issues" pubspec.yaml
-    fi
-    
-    # Update README.md
-    if [[ -f "README.md" ]]; then
-        if [[ -n "$old_username" ]]; then
-            sed -i '' "s|github.com/$old_username/|github.com/$username/|g" README.md
-        fi
-        # Add repository link if not present
-        if ! grep -q "github.com/$username/$PACKAGE_NAME" README.md; then
-            echo "" >> README.md
-            echo "## Repository" >> README.md
-            echo "" >> README.md
-            echo "https://github.com/$username/$PACKAGE_NAME" >> README.md
-        fi
-    fi
-    
-    # Update CHANGELOG.md
-    if [[ -f "CHANGELOG.md" ]] && [[ -n "$old_username" ]]; then
-        sed -i '' "s|github.com/$old_username/|github.com/$username/|g" CHANGELOG.md
-    fi
-    
-    # Update LICENSE
-    if [[ -f "LICENSE" ]]; then
-        if grep -q "Copyright (c)" LICENSE; then
-            sed -i '' "s/Copyright (c) [0-9]\{4\} .*/Copyright (c) $(date +%Y) $username/" LICENSE
-        fi
-    fi
-    
-    # Update any other .md files
-    find . -name "*.md" -not -path "./.git/*" -not -name "README.md" -not -name "CHANGELOG.md" | while read -r file; do
-        if [[ -n "$old_username" ]]; then
-            sed -i '' "s|github.com/$old_username/|github.com/$username/|g" "$file"
+            add_line_after pubspec.yaml "^description:" "${field}: $url"
         fi
     done
+    
+    # Update other files if old username exists
+    if [[ -n "$old_username" && "$old_username" != "$username" ]]; then
+        for file in README.md CHANGELOG.md LICENSE; do
+            [[ -f "$file" ]] && sed -i '' "s|github.com/$old_username/|github.com/$username/|g" "$file"
+        done
+    fi
+    
+    # Update LICENSE copyright
+    [[ -f "LICENSE" ]] && sed -i '' "s/Copyright (c) [0-9]\{4\} .*/Copyright (c) $(date +%Y) $username/" LICENSE
     
     print_success "GitHub username updated to '$username'"
+    return 0
 }
 
-# Function to rename package
+# Rename package (optional)
 rename_package() {
     print_info "Current package name: $PACKAGE_NAME"
-
-    if ! confirm "Do you want to rename the package?"; then
-        print_info "Skipping package renaming."
-        return
+    if ! confirm "Rename the package?"; then
+        return 0
     fi
-
+    
     local new_name
     while true; do
-        read -p "Enter the new package name (lowercase, underscores only): " new_name
-        if [[ -z "$new_name" ]]; then
-            print_error "Package name cannot be empty"
-            continue
-        fi
-        if ! echo "$new_name" | grep -q '^[a-z][a-z0-9_]*$'; then
-            print_error "Package name must start with lowercase letter and contain only lowercase letters, numbers, and underscores"
-            continue
-        fi
-        break
+        read -rp "Enter new package name (lowercase, underscores only): " new_name
+        [[ "$new_name" =~ ^[a-z][a-z0-9_]*$ ]] && break
+        print_error "Invalid name. Must start with lowercase letter, contain only [a-z0-9_]"
     done
-
+    
     local old_name="$PACKAGE_NAME"
-    print_info "Renaming package from '$old_name' to '$new_name'"
-
-    # Rename main library file
-    if [[ -f "lib/$old_name.dart" ]]; then
-        print_info "Renaming lib/$old_name.dart to lib/$new_name.dart"
-        mv "lib/$old_name.dart" "lib/$new_name.dart"
-        # Update content inside the file
-        sed -i '' "s/library $old_name;/library $new_name;/" "lib/$new_name.dart"
-        sed -i '' "s/src\/$old_name\.dart/src\/$new_name\.dart/g" "lib/$new_name.dart"
-        sed -i '' "s/package:$old_name/package:$new_name/g" "lib/$new_name.dart"
-    fi
-
-    # Rename src file
-    if [[ -f "lib/src/$old_name.dart" ]]; then
-        print_info "Renaming lib/src/$old_name.dart to lib/src/$new_name.dart"
-        mv "lib/src/$old_name.dart" "lib/src/$new_name.dart"
-        # Update content inside the file
-        sed -i '' "s/$old_name/$new_name/g" "lib/src/$new_name.dart"
-        sed -i '' "s/package:$old_name/package:$new_name/g" "lib/src/$new_name.dart"
-    fi
-
-    # Rename test file
-    if [[ -f "test/${old_name}_test.dart" ]]; then
-        print_info "Renaming test/${old_name}_test.dart to test/${new_name}_test.dart"
-        mv "test/${old_name}_test.dart" "test/${new_name}_test.dart"
-        # Update imports in test file
-        sed -i '' "s/package:$old_name/package:$new_name/g" "test/${new_name}_test.dart"
-        sed -i '' "s/$old_name/$new_name/g" "test/${new_name}_test.dart"
-    fi
-
-    # Update pubspec.yaml
+    print_info "Renaming '$old_name' to '$new_name'..."
+    
+    # Rename files
+    [[ -f "lib/$old_name.dart" ]] && mv "lib/$old_name.dart" "lib/$new_name.dart"
+    [[ -f "lib/src/$old_name.dart" ]] && mv "lib/src/$old_name.dart" "lib/src/$new_name.dart"
+    [[ -f "test/${old_name}_test.dart" ]] && mv "test/${old_name}_test.dart" "test/${new_name}_test.dart"
+    
+    # Update all references in Dart files
+    find lib test example -name "*.dart" -type f 2>/dev/null | xargs -I{} sed -i '' \
+        -e "s/package:$old_name/package:$new_name/g" \
+        -e "s/library $old_name/library $new_name/g" \
+        -e "s/src\/$old_name\.dart/src\/$new_name\.dart/g" {}
+    
+    # Update config files
     sed -i '' "s/^name: $old_name$/name: $new_name/" pubspec.yaml
-    # Update description if it contains old package name
-    sed -i '' "s/$old_name/$new_name/g" pubspec.yaml
-    # Update URLs in pubspec.yaml
     sed -i '' "s|/$old_name|/$new_name|g" pubspec.yaml
-
-    # Update imports in example
-    if [[ -f "example/lib/main.dart" ]]; then
-        sed -i '' "s/package:$old_name/package:$new_name/g" example/lib/main.dart
-        sed -i '' "s/$old_name/$new_name/g" example/lib/main.dart
-    fi
+    [[ -f "example/pubspec.yaml" ]] && sed -i '' "s/$old_name/$new_name/g" example/pubspec.yaml
     
-    # Update example's pubspec.yaml if it exists
-    if [[ -f "example/pubspec.yaml" ]]; then
-        sed -i '' "s/$old_name/$new_name/g" example/pubspec.yaml
-    fi
-
-    # Update documentation files
+    # Update documentation
     for file in README.md CHANGELOG.md; do
-        if [[ -f "$file" ]]; then
-            sed -i '' "s/$old_name/$new_name/g" "$file"
-        fi
-    done
-
-    # Update other .md files
-    find . -name "*.md" -not -path "./.git/*" -not -name "README.md" -not -name "CHANGELOG.md" | while read -r file; do
-        sed -i '' "s/$old_name/$new_name/g" "$file"
+        [[ -f "$file" ]] && sed -i '' "s/$old_name/$new_name/g" "$file"
     done
     
-    # Update all Dart files for any remaining references
-    find lib -name "*.dart" -type f | while read -r file; do
-        sed -i '' "s/package:$old_name/package:$new_name/g" "$file"
-    done
-    
-    find test -name "*.dart" -type f | while read -r file; do
-        sed -i '' "s/package:$old_name/package:$new_name/g" "$file"
-    done
-
     PACKAGE_NAME="$new_name"
+    print_success "Package renamed to '$new_name'"
     
-    # Rename the project directory itself
+    # Optionally rename directory
     local current_dir=$(basename "$PWD")
-    local project_renamed=false
-    if [[ "$current_dir" != "$new_name" ]]; then
-        if confirm "Rename the project directory from '$current_dir' to '$new_name'?" y; then
-            local parent_dir=$(dirname "$PWD")
-            local new_project_path="$parent_dir/$new_name"
-            
-            # Check if target directory already exists
-            if [[ -d "$new_project_path" ]]; then
-                print_error "Directory '$new_project_path' already exists. Cannot rename project directory."
-            else
-                print_info "Renaming project directory from '$current_dir' to '$new_name'"
-                cd "$parent_dir"
-                mv "$current_dir" "$new_name"
-                cd "$new_name"
-                print_success "Project directory renamed successfully!"
-                print_warning "Your working directory has changed to: $PWD"
-                project_renamed=true
-                
-                # Reopen VS Code in the new directory
-                print_info "Reopening VS Code in the new directory..."
-                if command -v code >/dev/null 2>&1; then
-                    # Close current window and open new one
-                    code "$PWD"
-                    print_success "VS Code will reopen in the new directory"
-                else
-                    print_warning "VS Code 'code' command not found. Please manually reopen VS Code in: $PWD"
-                fi
-            fi
-        fi
-    fi
-    
-    print_success "Package renamed successfully!"
-    
-    if [[ "$project_renamed" == true ]]; then
-        print_warning "IMPORTANT: The script will now exit to allow VS Code to reopen in the new directory."
-        print_info "After VS Code reopens, you can re-run this script to continue with publishing if needed."
-        if confirm "Exit now to let VS Code reopen?" y; then
+    if [[ "$current_dir" != "$new_name" ]] && confirm "Rename directory to '$new_name'?" y; then
+        local parent_dir=$(dirname "$PWD")
+        local new_path="$parent_dir/$new_name"
+        
+        if [[ -d "$new_path" ]]; then
+            print_error "Directory '$new_path' already exists"
+        else
+            cd "$parent_dir" && mv "$current_dir" "$new_name" && cd "$new_name"
+            print_success "Directory renamed. New path: $PWD"
+            command -v code >/dev/null && code "$PWD"
+            print_warning "Exiting. Re-run script after VS Code reopens."
             exit 0
         fi
     fi
-
-    if confirm "Run tests to verify changes?"; then
-        flutter test || print_warning "Tests failed, but continuing..."
+    
+    if confirm "Run tests to verify?"; then
+        flutter test || print_warning "Tests failed"
     fi
-
-    print_info "Next steps: Review changes with 'git status', then commit with 'git add . && git commit -m \"Rename package to $PACKAGE_NAME\"'"
+    return 0
 }
 
-# Function to run verification checklist
+# Run verification checklist
 run_verification() {
-    print_info "Running release verification checklist..."
-
-    # Documentation review with Copilot
-    print_info "Ensuring documentation is up to date..."
-    if confirm "Use Copilot AI to review and update CHANGELOG.md, README.md, and other documentation to reflect the current version ($VERSION) and package functionality?"; then
-        print_info "Please use Copilot AI in VS Code to update the documentation files."
-        print_info "Ask Copilot to:"
-        print_info "  - Ensure to create or update as necessary example folder and tests, with the updates made to the package (if any relevant)"
-        print_info "  - Ensure to create or update an MIT license file if missing"
-        print_info "  - Ensure CHANGELOG.md includes the current version $VERSION and describes changes"
-        print_info "  - Update README.md to accurately describe the package, its features, and include example usage, with the updates made to the package (if any relevant)"
-        print_info "  - Verify all MD files are up to date with the latest package information"
-        print_info "  - Ensure README.md reflects the examples in the example/ directory"
-        print_info "  - unless already done, if there are any asset png or GIF or JPEG... files within the example folder, Add these screenshot files into the package's README (giving them the github path to the example folder, rather than a local path to it) to visually show a few examples of this package (basic and advanced usage) when the package is published to pub.dev."
-        if confirm "Press enter when documentation is updated"; then
-            print_success "Documentation updated via Copilot."
+    print_info "Running verification checklist..."
+    
+    # Prompt for documentation review with Copilot
+    if confirm "Use Copilot AI to review and update documentation for version $VERSION?"; then
+        echo ""
+        print_info "Please ask Copilot AI in VS Code to help with the following:"
+        echo ""
+        echo "  ${YELLOW}Suggested prompt for Copilot:${NC}"
+        echo "  ─────────────────────────────────────────────────────────────────"
+        echo "  I'm releasing version $VERSION to GitHub and pub.dev."
+        echo "  Please help ensure documentation is complete:"
+        echo ""
+        echo "  - Create/update example/ folder as a Flutter app with basic & advanced examples"
+        echo "  - Create/update tests reflecting package features"
+        echo "  - Ensure MIT LICENSE file exists"
+        echo "  - Update CHANGELOG.md with version $VERSION and describe changes"
+        echo "  - Update README.md with accurate description, features, and usage examples"
+        echo "  - If example/ contains GIF/PNG/JPEG assets, add them to README.md using"
+        echo "    GitHub raw URLs (e.g., https://raw.githubusercontent.com/$USERNAME/$PACKAGE_NAME/main/example/assets/example.gif)"
+        echo "  - Ensure README.md shows both basic and advanced usage examples"
+        echo "  ─────────────────────────────────────────────────────────────────"
+        echo ""
+        if confirm "Press Enter when documentation is updated"; then
+            print_success "Documentation reviewed"
         fi
     fi
-
-    # Version consistency
-    print_info "Checking version consistency..."
+    
+    # Version consistency check
     if ! grep -q "^version: $VERSION$" pubspec.yaml; then
         print_error "Version mismatch in pubspec.yaml"
         exit 1
     fi
-
-    # Documentation checks
-    if [[ -f "README.md" ]]; then
-        if ! grep -q "$VERSION" README.md; then
-            print_warning "Version not found in README.md"
-        fi
-        if ! grep -qi "example" README.md; then
-            print_warning "README.md does not mention examples. Consider adding example usage."
-        fi
-    else
-        print_warning "README.md not found"
+    
+    # Documentation warnings
+    if [[ -f "README.md" ]] && ! grep -q "$VERSION" README.md; then
+        print_warning "Version not in README.md"
     fi
-
-    if [[ -f "CHANGELOG.md" ]]; then
-        if ! grep -q "$VERSION" CHANGELOG.md; then
-            print_warning "Version not found in CHANGELOG.md"
-        fi
-    else
-        print_warning "CHANGELOG.md not found"
+    if [[ -f "CHANGELOG.md" ]] && ! grep -q "$VERSION" CHANGELOG.md; then
+        print_warning "Version not in CHANGELOG.md"
     fi
-
-    # Test files check
-    print_info "Checking for test files..."
-    if [[ ! -d "test" ]] || [[ -z "$(find test -name "*.dart" 2>/dev/null)" ]]; then
-        print_warning "No test files found in test/ directory."
-        print_info "Use Copilot AI to generate comprehensive tests for your package."
-        if ! confirm "Continue without tests?"; then
-            exit 1
-        fi
+    
+    # Check for tests and examples
+    if [[ -z "$(find test -name '*.dart' 2>/dev/null)" ]]; then
+        print_warning "No test files found"
     fi
-
-    # Example code check
-    print_info "Checking for example code..."
-    if [[ ! -d "example" ]] || [[ ! -f "example/lib/main.dart" ]]; then
-        print_warning "No example code found in example/ directory."
-        print_info "Use Copilot AI to create example usage code demonstrating the package functionality."
-        if ! confirm "Continue without example?"; then
-            exit 1
-        fi
+    if [[ ! -f "example/lib/main.dart" ]]; then
+        print_warning "No example code found"
     fi
-
-    # Code checks
-    print_info "Running flutter analyze..."
-    if ! flutter analyze; then
-        print_error "Analysis failed"
-        exit 1
-    fi
-
-    print_info "Running flutter test..."
-    if ! flutter test; then
-        print_error "Tests failed"
-        exit 1
-    fi
-
+    
+    # Run Flutter checks
+    print_info "Running analysis..."
+    flutter analyze || { print_error "Analysis failed"; exit 1; }
+    
+    print_info "Running tests..."
+    flutter test || { print_error "Tests failed"; exit 1; }
+    
     print_info "Formatting code..."
     dart format .
-
-    # Publishing preparation
-    print_info "Running flutter pub get..."
-    flutter pub get
-
+    
     print_info "Running dry-run publish..."
-    if ! flutter pub publish --dry-run; then
-        print_error "Dry-run publish failed"
-        exit 1
-    fi
-
-    print_success "Verification completed successfully!"
+    flutter pub get
+    flutter pub publish --dry-run || { print_error "Dry-run failed"; exit 1; }
+    
+    print_success "Verification complete!"
+    return 0
 }
 
-# Function to ensure git repo
+# Initialize git repository
 ensure_git_repo() {
     if [[ ! -d .git ]]; then
         print_info "Initializing git repository..."
@@ -597,20 +463,18 @@ ensure_git_repo() {
         git add .
         git commit -m "Initial commit"
     fi
-
-    if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
-        git add .
-        git commit -m "Initial commit"
-    fi
-
     git branch -M main 2>/dev/null || true
+    return 0
 }
 
-# Function to create license if missing
+# Create MIT license if missing
 create_license_if_missing() {
-    if [[ ! -f LICENSE && ! -f LICENSE.md ]]; then
-        print_info "Creating MIT LICENSE file..."
-        cat > LICENSE <<EOF
+    if [[ -f LICENSE || -f LICENSE.md ]]; then
+        return 0
+    fi
+    
+    print_info "Creating MIT LICENSE..."
+    cat > LICENSE <<EOF
 MIT License
 
 Copyright (c) $(date +%Y) $USERNAME
@@ -633,234 +497,165 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 EOF
-        git add LICENSE
-        git commit -m "Add MIT license"
-    fi
+    git add LICENSE
+    git commit -m "Add MIT license" || true
+    return 0
 }
 
-# Function to create GitHub repo
+# Setup GitHub repository
 create_github_repo() {
     print_info "Setting up GitHub repository..."
-
     ensure_git_repo
-
-    # Check for gh CLI
+    
+    local repo="$USERNAME/$PACKAGE_NAME"
+    local remote_url="https://github.com/$repo.git"
+    
     if command -v gh >/dev/null 2>&1; then
-        print_info "Using GitHub CLI (gh) to create repository..."
-
-        if gh repo view "$USERNAME/$PACKAGE_NAME" >/dev/null 2>&1; then
-            print_info "Repository $USERNAME/$PACKAGE_NAME already exists. Setting remote and pushing."
-            git remote remove origin 2>/dev/null || true
-            git remote add origin "https://github.com/$USERNAME/$PACKAGE_NAME.git"
-            git push -u origin main
+        # Ensure authenticated
+        gh auth status >/dev/null 2>&1 || gh auth login
+        
+        if gh repo view "$repo" >/dev/null 2>&1; then
+            print_info "Repository exists, pushing..."
         else
-            print_info "Creating new repository $USERNAME/$PACKAGE_NAME on GitHub..."
-            if ! gh auth status >/dev/null 2>&1; then
-                print_warning "You are not logged into GitHub CLI. Attempting to login..."
-                gh auth login
-            fi
-            gh repo create "$USERNAME/$PACKAGE_NAME" --public --description "$DESCRIPTION"
-            git remote remove origin 2>/dev/null || true
-            git remote add origin "https://github.com/$USERNAME/$PACKAGE_NAME.git"
-            git push -u origin main
+            print_info "Creating repository..."
+            gh repo create "$repo" --public --description "$DESCRIPTION"
         fi
+        
+        git remote remove origin 2>/dev/null || true
+        git remote add origin "$remote_url"
+        git push -u origin main
     else
-        print_warning "GitHub CLI not found. Attempting to use GitHub API..."
-
+        # Fallback to GitHub API
         if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-            print_error "GITHUB_TOKEN not set. Please set it or install GitHub CLI."
-            print_info "To create a token: https://github.com/settings/tokens"
+            print_error "GITHUB_TOKEN not set. Install gh CLI or set token."
             exit 1
         fi
-
+        
         local status
-        status=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$USERNAME/$PACKAGE_NAME")
-
-        if [[ "$status" == "200" ]]; then
-            print_info "Repository exists. Setting remote and pushing..."
-            git remote remove origin 2>/dev/null || true
-            git remote add origin "https://github.com/$USERNAME/$PACKAGE_NAME.git"
-            git push -u origin main
-        elif [[ "$status" == "404" ]]; then
-            print_info "Creating repository via GitHub API..."
+        status=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$repo")
+        
+        if [[ "$status" == "404" ]]; then
+            print_info "Creating repository via API..."
             curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                -d "{\"name\":\"$PACKAGE_NAME\",\"description\":\"$DESCRIPTION\",\"private\":false,\"auto_init\":true,\"license_template\":\"mit\"}" \
+                -d "{\"name\":\"$PACKAGE_NAME\",\"description\":\"$DESCRIPTION\",\"private\":false}" \
                 "https://api.github.com/user/repos"
-            git remote remove origin 2>/dev/null || true
-            git remote add origin "https://github.com/$USERNAME/$PACKAGE_NAME.git"
-            git push -u origin main
-        else
-            print_error "Unexpected response from GitHub API: $status"
-            exit 1
         fi
+        
+        git remote remove origin 2>/dev/null || true
+        git remote add origin "$remote_url"
+        git push -u origin main
     fi
-
+    
     create_license_if_missing
-
-    print_success "GitHub repository setup complete!"
+    print_success "GitHub repository ready!"
+    return 0
 }
 
-# Function to publish to pub.dev
+# Publish to pub.dev
 publish_to_pubdev() {
     print_info "Publishing to pub.dev..."
-
-    # URLs should already be set by update_github_username, but verify
-    local homepage="https://github.com/$USERNAME/$PACKAGE_NAME"
-    local repository="https://github.com/$USERNAME/$PACKAGE_NAME"
-    local issues="https://github.com/$USERNAME/$PACKAGE_NAME/issues"
-
-    # Verify URLs are present (should have been added by update_github_username)
-    if ! grep -q "^homepage:" pubspec.yaml; then
-        print_warning "Homepage not found, adding it now..."
-        sed -i '' "/^description:/a\\
-homepage: $homepage" pubspec.yaml
-    fi
-
-    if ! grep -q "^repository:" pubspec.yaml; then
-        print_warning "Repository not found, adding it now..."
-        sed -i '' "/^description:/a\\
-repository: $repository" pubspec.yaml
-    fi
-
-    if ! grep -q "^issue_tracker:" pubspec.yaml; then
-        print_warning "Issue tracker not found, adding it now..."
-        sed -i '' "/^description:/a\\
-issue_tracker: $issues" pubspec.yaml
-    fi
-
+    
     # Final dry-run
-    print_info "Final dry-run before publishing..."
     if ! flutter pub publish --dry-run; then
-        print_error "Dry-run failed. Please fix the issues before publishing."
+        print_error "Dry-run failed"
         return 1
     fi
-
-    if ! confirm "Proceed with publishing to pub.dev?"; then
-        print_info "Publishing cancelled."
-        return
+    
+    if ! confirm "Proceed with publishing?"; then
+        print_info "Cancelled"
+        return 0
     fi
-
-    print_info "Publishing to pub.dev..."
+    
     flutter pub publish
-
-    print_success "Published to pub.dev successfully!"
-    print_info "Visit: https://pub.dev/packages/$PACKAGE_NAME"
+    print_success "Published! Visit: https://pub.dev/packages/$PACKAGE_NAME"
+    return 0
 }
 
-# Function to create GitHub release
+# Create GitHub release
 create_github_release() {
-    print_info "Creating GitHub release..."
-
-    # Create tag
+    print_info "Creating GitHub release v$VERSION..."
+    
     git tag -a "v$VERSION" -m "Release version $VERSION"
     git push origin "v$VERSION"
-
-    # Create release
+    
     if command -v gh >/dev/null 2>&1; then
         gh release create "v$VERSION" --title "Release v$VERSION" --notes-file CHANGELOG.md
     else
-        print_info "GitHub CLI not available. Please create the release manually at:"
-        print_info "https://github.com/$USERNAME/$PACKAGE_NAME/releases/new"
-        print_info "Tag: v$VERSION"
-        print_info "Title: Release v$VERSION"
-        print_info "Copy changelog from CHANGELOG.md"
+        print_info "Create release manually: https://github.com/$USERNAME/$PACKAGE_NAME/releases/new"
     fi
-
+    
     print_success "GitHub release created!"
+    return 0
 }
 
-# Main script
+# Main entry point
 main() {
     echo "========================================"
     echo "Flutter Package Release & Publish Script"
     echo "========================================"
-
-    # Get package info
+    
+    # Initialize
     get_package_info
-
-    # Pre-step: organize shell scripts & ensure .gitattributes and .pubignore configuration
     organize_shell_scripts
+    ensure_gitignore
     ensure_gitattributes
     ensure_pubignore
-
-    # Step 1: Package renaming
+    
+    # Optional package rename
     rename_package
+    get_package_info  # Reload after potential rename
     
-    # Reload package info after potential rename
-    get_package_info
-
-    # Step 2: Get GitHub username
+    # Get/update GitHub username
     local old_username=""
-    # Try to extract existing username from pubspec.yaml
     if grep -q "github.com/" pubspec.yaml; then
-        old_username=$(grep "github.com/" pubspec.yaml | head -1 | sed 's|.*github.com/||' | sed 's|/.*||')
-        print_info "Current GitHub username in pubspec.yaml: $old_username"
+        old_username=$(grep "github.com/" pubspec.yaml | head -1 | sed 's|.*github.com/||; s|/.*||')
     fi
     
-    read -p "Enter your GitHub username [$old_username]: " USERNAME
-    USERNAME=${USERNAME:-$old_username}
-    
+    read -rp "GitHub username [$old_username]: " USERNAME
+    USERNAME="${USERNAME:-$old_username}"
     if [[ -z "$USERNAME" ]]; then
-        print_error "GitHub username is required"
+        print_error "GitHub username required"
         exit 1
     fi
     
-    # Update GitHub username across all files
     update_github_username "$USERNAME" "$old_username"
-
-    # Step 3: Version number
-    print_info "Current version: $VERSION"
-    local new_version
-    read -p "Enter the version number (e.g., 0.0.1) [$VERSION]: " new_version
-    new_version=${new_version:-$VERSION}
     
-    # Validate version format
-    if ! echo "$new_version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.+-]+)?(\+[a-zA-Z0-9.+-]+)?$'; then
-        print_error "Invalid version format. Please use semantic versioning (e.g., 0.0.1, 1.0.0-beta, 2.1.3+build123)"
+    # Version update
+    read -rp "Version [$VERSION]: " new_version
+    new_version="${new_version:-$VERSION}"
+    
+    # Validate semver format
+    if ! [[ "$new_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.+-]+)?(\+[a-zA-Z0-9.+-]+)?$ ]]; then
+        print_error "Invalid version format (use semver: 0.0.1, 1.0.0-beta)"
         exit 1
     fi
     
-    if [[ "$new_version" != "$VERSION" ]]; then
-        update_version "$new_version"
-    fi
-    
-    # Reload package info after updates
+    update_version "$new_version"
     get_package_info
     
-    print_success "Package configuration updated!"
-    echo ""
-    echo "Summary:"
+    # Summary
+    echo -e "\n${GREEN}Configuration:${NC}"
     echo "  Package: $PACKAGE_NAME"
     echo "  Version: $VERSION"
-    echo "  GitHub: $USERNAME/$PACKAGE_NAME"
+    echo "  GitHub:  $USERNAME/$PACKAGE_NAME"
     echo ""
-
-    # Commit changes before verification
+    
+    # Execute steps
     commit_changes
-
-    # Verification
-    if confirm "Run verification checklist (analyze, test, dry-run)?" y; then
+    if confirm "Run verification?" y; then
         run_verification
     fi
-
-    # GitHub setup
-    if confirm "Set up GitHub repository?" y; then
+    if confirm "Setup GitHub repository?" y; then
         create_github_repo
     fi
-
-    # Publishing
     if confirm "Publish to pub.dev?" y; then
         publish_to_pubdev
     fi
-
-    # GitHub release
     if confirm "Create GitHub release?" y; then
         create_github_release
     fi
-
-    print_success "All done! Your package is released and published."
-    print_info "Don't forget to update your package's pub.dev score and respond to issues."
+    
+    print_success "All done! Package released and published."
 }
 
-# Run main function
 main "$@"

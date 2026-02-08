@@ -1,11 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:s_webview/s_webview.dart';
-import 'package:s_webview/src/_s_webview/webview_controller/webview_controller.dart';
+import 'package:s_packages/s_webview/src/_s_webview/_s_webview.dart';
+import 'package:s_packages/s_packages.dart';
 
 void main() {
   setUp(() {
     WebViewController.isTestMode = true;
-    SharedPreferences.setMockInitialValues({});
   });
 
   group('SWebView Widget Tests', () {

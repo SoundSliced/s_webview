@@ -1,6 +1,6 @@
 name: s_webview
 description: A Flutter package that provides an enhanced WebView widget with smooth animations, loading states, and multi-platform support including desktop platforms
-version: 2.1.0
+version: 3.0.0
 homepage: https://github.com/SoundSliced/s_webview
 repository: https://github.com/SoundSliced/s_webview
 issue_tracker: https://github.com/SoundSliced/s_webview/issues
@@ -12,18 +12,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  web: ^1.1.1
-  webview_flutter: ^4.13.0
-  webview_flutter_android: ^4.10.11
-  webview_flutter_wkwebview: ^3.23.5
-  webview_flutter_web: ^0.2.3+4
-  path: ^1.9.1
-  flutter_animate: ^4.5.2
-  ticker_free_circular_progress_indicator: ^1.0.0
-  http: ^1.6.0
-  shared_preferences: ^2.5.4
-  pointer_interceptor: ^0.10.1+2
-  desktop_webview_window: ^0.2.3
+  s_packages: ^1.1.2
 
 dev_dependencies:
   flutter_test:
@@ -31,17 +20,4 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
-  plugin:
-    platforms:
-      android:
-        default_package: webview_flutter_android
-      ios:
-        default_package: webview_flutter_wkwebview
-      web:
-        default_package: webview_flutter_web
-      windows:
-        default_package: desktop_webview_window
-      macos:
-        default_package: desktop_webview_window
-      linux:
-        default_package: desktop_webview_window
+  uses-material-design: true
