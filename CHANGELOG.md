@@ -1,3 +1,8 @@
+ 
+
+## 3.0.1
+- `s_packages` package dependency upgraded
+
 ## 3.0.0
 - package no longer holds the source code for it, but exports/exposes the `s_packages` package instead, which will hold this package's latest source code.
 - The only future changes to this package will be made via `s_packages` package dependency upgrades, in order to bring the new fixes or changes to this package
