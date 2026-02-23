@@ -1,4 +1,29 @@
- 
+## 3.1.0
+- **`s_webview` major upgrade**:
+  - Added typed config API with `SWebViewConfig` (auto restriction detection, proxy list fallback, host-based cache option, cache TTL, known restricted domains).
+  - Added external controller injection support via `SWebView(controller: ...)` with safe ownership/disposal behavior.
+  - Added richer callbacks: `onProgress`, `onPageStarted`, `onPageFinished`, `onUrlChanged`, `onNavigationRequest`, `onJavaScriptMessage`.
+  - Added navigation decision model (`SWebViewNavigationDecision`) and callback type (`SWebViewNavigationRequestCallback`) to allow/prevent navigation.
+  - Added platform capability model (`SWebViewPlatformCapabilities`) on controller.
+
+- **`s_webview` behavior and reliability improvements**:
+  - Removed hardcoded navigation blocking and replaced it with callback-driven policy.
+  - Upgraded JS result handling to use `runJavaScriptReturningResult(...)` for title/cookies/search metadata paths.
+  - Reworked web proxy cache with persisted timestamped entries, TTL validation, stale entry invalidation, and backward compatibility for old bool cache format.
+  - Improved restriction detection using known-domain checks plus header/content hints (`X-Frame-Options`, CSP `frame-ancestors`, body hints).
+  - Added idempotent/concurrency-safe controller initialization to prevent repeated-init crashes (including `LateInitializationError` on reused controllers).
+  - Updated controller navigation helpers to use unified `loadUri(...)` flow and aligned desktop support documentation.
+
+- **`s_webview` API cleanup and internals**:
+  - Exported advanced controller extensions from `webview_controller.dart`.
+  - Removed duplicate legacy file `webview_controller_clean.dart`.
+  - Added shared internal debug logger `_debug_log.dart` and routed platform/desktop logs through it.
+  - Added optional pointer-event blocking overlay support to internal WebView widget (`ignorePointerEvents`).
+
+- **Example app updates (`s_webview_example_screen`)**:
+  - Updated demo to showcase injected controller, typed config, progress/url callbacks, JS message callback, and navigation decision policy toggle.
+  - Added richer live UI state (progress bar, last seen URL, policy feedback, JS message panel).
+  
 
 ## 3.0.1
 - `s_packages` package dependency upgraded
