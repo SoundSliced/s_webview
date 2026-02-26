@@ -20,7 +20,7 @@ Add `s_webview` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  s_webview: ^3.1.0
+  s_webview: ^4.0.0
 ```
 
 ## Platform Requirements
