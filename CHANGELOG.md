@@ -1,5 +1,20 @@
+## [4.0.2]
+- `s_packages` dependency upgraded to ^3.0.2
+  - **`s_webview` proxy HTML normalization refactor:**
+    - Extracted new `SWebViewProxyHtmlUtils` utility class (`_proxy_html_utils.dart`) to centralize proxy response handling.
+    - `normalizeProxyHtml()` — unwraps known JSON envelopes (e.g. allorigins `{ contents: ... }`), decodes HTML entities (including doubly-escaped payloads like `&amp;lt;html...`), strips wrapping quotes, and handles URL-encoded HTML.
+    - `injectBaseTagIfMissing()` — safely injects `<base href="...">` into the `<head>` (or prepends it) when none is present, with proper fragment stripping from the base URL.
+    - `looksLikeHtml()` — best-effort HTML-detection heuristic.
+    - Refactored `_SWebViewState` to use `SWebViewProxyHtmlUtils` instead of inline proxy response / base-tag injection logic.
+    - Added unit tests for `SWebViewProxyHtmlUtils` (JSON envelope unwrap, double-entity decoding, base tag injection/deduplication).
+
+  - **Example app updates:**
+    - Expanded webview example screen with many more test-URL buttons in a horizontally scrollable row.
+    - Added basic widget test (`example/test/widget_test.dart`).
+
 ## [4.0.1]
 - `s_packages` dependency upgraded to ^3.0.1
+  - **`s_webview` fix:** restored `webview_flutter_web` dependency that was accidentally removed in 3.0.0, causing URL loading to fail on web platform (no web platform backend registered).
 
 
 ## [4.0.0]
